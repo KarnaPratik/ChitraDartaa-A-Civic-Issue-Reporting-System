@@ -71,5 +71,5 @@ Developed by:
 Pratik Karna
 Mahesh Panta
 Abhyudaya Pokhrel
-Aadmin Sapkota
+Aadim Sapkota
 
