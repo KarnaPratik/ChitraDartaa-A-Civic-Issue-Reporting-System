@@ -124,7 +124,7 @@ class _MyWidgetState extends State<MyLogin> {
                               // For network image:
                               // image: NetworkImage('YOUR_IMAGE_URL'),
                               // For asset image:
-                              image: AssetImage('assets/bg_login'),
+                              image: AssetImage('asset/bg_login.jpg'),
                               fit: BoxFit.cover,
                             ),
                           ),
