@@ -19,7 +19,7 @@ class _MyWidgetState extends State<MyApp> {
   Widget build(BuildContext context) {
     return  MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: "login_page",
+      initialRoute: "/signup",
       routes:{
        "/login":(context)=>  MyLogin(),
         "/signup":(context)=> const MyRegister(),
