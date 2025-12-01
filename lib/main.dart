@@ -18,6 +18,7 @@ class _MyWidgetState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return  MaterialApp(
+      debugShowCheckedModeBanner: false,
       initialRoute: "/signup",
       routes:{
        "/login":(context)=>  MyLogin(),
