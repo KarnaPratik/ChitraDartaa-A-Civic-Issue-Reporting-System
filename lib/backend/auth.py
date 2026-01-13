@@ -28,7 +28,7 @@ class User(db.Model):
 def signup():
     #for signup ig we gotta expect username, email and password and from sign up we just assign citizens as only citizens can sign up for administrator we have decided to add them separately
     data=request.get_json()
-    if not data or not data.get("username") or not data.get("email"), or not data.get("password"):
+    if not data or not data.get("username") or not data.get("email") or not data.get("password"):
         return jsonify({"error":"Incomplete info"})
     username=data["username"]
     password=data["password"]
