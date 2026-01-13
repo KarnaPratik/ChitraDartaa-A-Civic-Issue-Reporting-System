@@ -19,7 +19,7 @@ A platform that allows citizens to report civic issues (such as potholes, damage
 
 ```
 /frontend   → Flutter mobile app
-/backend    → Firebase functions
+/backend    → flask/python functions
 /ml         → ML model scripts, notebooks
 /docs       → System diagrams, notes, API specs
 ```
@@ -30,7 +30,7 @@ A platform that allows citizens to report civic issues (such as potholes, damage
 
 * **Frontend:** Flutter (Dart)
 * **Backend:** Flask(RESTAPI)
-* **Database:** Firebase Firestore
+* **Database:** Flask_SQLAlchemy
 * **ML Model:** Python, TensorFlow
 
 ---
@@ -60,7 +60,7 @@ flutter run
 
 
 ```
-firebase emulators:start
+python backend_main.py
 ```
 
 
