@@ -94,7 +94,7 @@ class _MyLoginState extends State<MyLogin> {
     // Responsive sizing
     final double horizontalPadding = isMobile ? 24 : (isTablet ? 40 : 48);
     final double verticalPadding = isMobile ? 24 : 40;
-    final double maxWidth = isMobile ? double.infinity : (isTablet ? 500 : 450);
+    final double maxWidth = isDesktop ? 450 : (isTablet ? 500 : double.infinity);
     final double iconSize = isMobile ? 60 : 70;
     final double titleSize = isMobile ? 26 : (isTablet ? 30 : 32);
     final double inputHeight = isMobile ? 48 : 52;
@@ -142,10 +142,10 @@ class _MyLoginState extends State<MyLogin> {
                                 ),
                               ),
                               SizedBox(height: isMobile ? 20 : 24),
-                              const Text(
+                              Text(
                                 'Welcome Back',
                                 style: TextStyle(
-                                  fontSize: 28, // Fixed: Removed variable reference
+                                  fontSize: titleSize, // Fixed: Used variable correctly
                                   fontWeight: FontWeight.w600,
                                   color: Colors.black87,
                                   letterSpacing: -0.5,
