@@ -2,7 +2,7 @@ from flask import Flask, Blueprint,current_app,request,jsonify
 from backend_main import db
 from werkzeug.security import check_password_hash, generate_password_hash
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 
@@ -76,7 +76,35 @@ def login():
         if not user or not  check_password_hash(user.password_hash,password) or role_!=user.isadministrator:
              return jsonify({"error":"Invalid username or password!"}),401
         
-             
-             
+        access_token=create_access_token(username)
+        return jsonify(
+             {
+                  "message":"Login Sucessful!",
+                  "token":access_token,
+                  "username":username
 
+             }
+        )
         
+             
+             
+#this token will create token for every login
+def create_access_token(user):
+     """
+     This function will generate access_token that would be required for authentication and everything
+     """
+
+     payload={
+          "username":user,
+          "exp":datetime.now(timezone.utc)+timedelta(hours=24),
+          "iat":datetime.now(timezone.utc)
+     }
+
+
+     token=jwt.encode(
+          payload=payload,
+          key=current_app.config["SECRET_KEY"],
+          algorithm="HS256"
+     )
+     
+     return token
