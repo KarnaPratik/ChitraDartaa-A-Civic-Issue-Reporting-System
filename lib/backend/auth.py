@@ -68,5 +68,15 @@ def login():
              return jsonify({"error":"Invalid Request!"}),401
         username=data["username"]
         password=data["password"]
-        role=data["role"]
+        role_=data["role"]
+
+        user=User.query.filter_by(username=username).first()
+ 
+
+        if not user or not  check_password_hash(user.password_hash,password) or role_!=user.isadministrator:
+             return jsonify({"error":"Invalid username or password!"}),401
+        
+             
+             
+
         
