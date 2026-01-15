@@ -108,3 +108,26 @@ def create_access_token(user):
      )
      
      return token
+
+
+@auth_bp.route("/whoami",methods=["GET"])
+@token_required
+def whoami():
+     """this will return  current user information but would require the token
+     for now i have not added decoder yet but this can be used for later
+     """
+
+     username=request.user
+     user=User.query.filter_by(username=username).first()
+
+
+     if not user:
+          return jsonify({"error":"User doesnot exist!"}), 404
+     
+     return jsonify(
+          {
+               "username":user.username,
+               "id":user.id,
+               "message":"User is authenticated!"
+          }
+     ),200
