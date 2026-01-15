@@ -57,4 +57,16 @@ def signup():
 
 
 
-    
+#this function is for login
+auth_bp.route("/login",methods=["POST"])
+def login():
+        '''
+        here we get json with username and possword with like role so if either its citizen or an administrator
+        '''
+        data=request.get_json()
+        if not data or data["username"] or not data["password"] or not data["role"]:
+             return jsonify({"error":"Invalid Request!"}),401
+        username=data["username"]
+        password=data["password"]
+        role=data["role"]
+        
