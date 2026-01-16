@@ -170,7 +170,7 @@ build/
 # TensorFlow / Machine Learning artifacts
 # -----------------------
 # Saved models, checkpoints, large binary blobs
-saved_model/
+
 export/
 checkpoints/
 checkpoints-*/
@@ -182,8 +182,8 @@ checkpoints-*/
 *.tflite
 *.tfrecord
 *.tfrecords
-*.h5
-*.hdf5
+
+
 
 # Logs / events
 events.out.tfevents.*
@@ -192,7 +192,7 @@ logs/
 mlruns/
 
 # Large model weights / folders you shouldn't commit
-models/
+
 weights/
 artifacts/
 dataset_cache/
