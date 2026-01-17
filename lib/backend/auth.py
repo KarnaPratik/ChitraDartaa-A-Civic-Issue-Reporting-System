@@ -37,12 +37,12 @@ def signup():
 
     #to check if the same username or email exist we check in the dbase
     existing_username=User.query.filter_by(username=username).first()
-    existing_email=User.query.filter_by(email=email)
+    existing_email=User.query.filter_by(email=email).first()
     if existing_email or existing_username:
         return jsonify({"error":"User or Email exists!"}),409 #just adding error code for easier use 
     
     pasword_hash=generate_password_hash(password=password)
-    new_user=User(username=username,email=email,password=pasword_hash,is_administrator=False)
+    new_user=User(username=username,email=email,password_hash=pasword_hash,is_administrator=False)
 
     #adding the user into the dbase
     try:
@@ -58,13 +58,13 @@ def signup():
 
 
 #this function is for login
-auth_bp.route("/login",methods=["POST"])
+@auth_bp.route("/login",methods=["POST"])
 def login():
         '''
         here we get json with username and possword with like role so if either its citizen or an administrator
         '''
         data=request.get_json()
-        if not data or data["username"] or not data["password"] or not data["role"]:
+        if not data or not data.get("username") or not data.get("password") or  "role" not in data:
              return jsonify({"error":"Invalid Request!"}),401
         username=data["username"]
         password=data["password"]
@@ -73,7 +73,7 @@ def login():
         user=User.query.filter_by(username=username).first()
  
 
-        if not user or not  check_password_hash(user.password_hash,password) or role_!=user.isadministrator:
+        if not user or not  check_password_hash(user.password_hash,password) or role_!=user.is_administrator:
              return jsonify({"error":"Invalid username or password!"}),401
         
         access_token=create_access_token(username)
@@ -121,7 +121,7 @@ def token_required(f):
             try:
                 head=auth_header.split(" ")
                 if len(head)!=2 or head[0]!="Bearer":
-                     return jsonify({"error":"Wrong token format use = Bearer <token>"})
+                     return jsonify({"error":"Wrong token format use = Bearer <token>"}),401
                 token=head[1]
             except IndexError:
                  return jsonify({"error":"Wrong token format!"}),401
