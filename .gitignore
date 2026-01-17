@@ -192,13 +192,14 @@ logs/
 mlruns/
 
 # Large model weights / folders you shouldn't commit
-
+models/
 weights/
 artifacts/
 dataset_cache/
 data/
 *.npy
 *.npz
+*.keras
 
 # -----------------------
 # Editor / IDE
