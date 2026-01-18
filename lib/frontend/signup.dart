@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:chitradartaa/frontend/auth.dart';
+
+
 
 class MyRegister extends StatefulWidget {
   const MyRegister({super.key});
@@ -18,6 +21,90 @@ class _MyRegisterState extends State<MyRegister> {
   // Password visibility
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+bool isLoading=false;
+
+void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+        ),
+        backgroundColor: Colors.redAccent.withOpacity(0.9),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+Future<void> _handleSignup() async{
+  final RegExp emailRegExp = RegExp(r"^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+    if (nameController.text.isEmpty) {
+    _showError('Please enter your name');
+    return;
+  }
+  
+  if (emailController.text.isEmpty) {
+    _showError('Please enter your email');
+    return;
+  }
+  if(!emailRegExp.hasMatch(emailController.text)){
+    _showError("Incorrect Email");
+    return;
+  }
+  
+  if (passwordController.text.isEmpty) {
+    _showError('Please enter a password');
+    return;
+  }
+  
+  if (passwordController.text.length < 6) {
+    _showError('Password must be at least 6 characters');
+    return;
+  }
+  
+  if (passwordController.text != confirmPasswordController.text) {
+    _showError('Passwords do not match');
+    return;
+  }
+
+  setState(() {
+    isLoading = true;
+  });
+
+  try{
+    await AuthService.signUp(username: nameController.text.trim(), password: passwordController.text, email: emailController.text.trim());
+    if(mounted){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Account successfully created! Please login!"),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        )
+      );
+      Navigator.pushReplacementNamed(context, "/login");
+    }
+  }
+  catch(e){
+    if (mounted){
+      _showError(e.toString().replaceAll("Exception: ", ""));
+    }
+  }
+  finally {
+    if (mounted){
+      setState(() {
+          isLoading = false;
+        });
+
+
+    }
+  }
+
+}
 
   @override
   void dispose() {
@@ -154,11 +241,10 @@ class _MyRegisterState extends State<MyRegister> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, "/login");
-                    },
+                    onPressed: isLoading ? null : _handleSignup,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue.shade700,
+                      disabledBackgroundColor: Colors.grey[300],
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -166,7 +252,16 @@ class _MyRegisterState extends State<MyRegister> {
                       elevation: 5,
                       shadowColor: Colors.blue.shade300,
                     ),
-                    child: Text(
+                    child: isLoading  // 
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                    : Text(
                       "Sign Up",
                       style: GoogleFonts.poppins(
                         fontSize: 18,
@@ -176,13 +271,14 @@ class _MyRegisterState extends State<MyRegister> {
                     ),
                   ),
                 ),
+                
 
                 const SizedBox(height: 25),
 
                 // Login Link
                 Center(
                   child: GestureDetector(
-                    onTap: () => Navigator.pushNamed(context, "/login"),
+                    onTap: isLoading ? null : () => Navigator.pushNamed(context, "/login"),
                     child: RichText(
                       text: TextSpan(
                         text: "Already have an account? ",
@@ -234,6 +330,7 @@ class _MyRegisterState extends State<MyRegister> {
         ],
       ),
       child: TextField(
+        enabled: !isLoading,
         controller: controller,
         obscureText: obscure,
         keyboardType: keyboardType,

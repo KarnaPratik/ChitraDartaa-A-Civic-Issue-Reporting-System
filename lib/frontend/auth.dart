@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';//to store tokens
 
 
 class AuthService{
-  static const String url="http://127.0.0.1:5000";
+  static const String url="http://localhost:6969";
 
   //this will call sign up function
   static Future<bool>signUp({
@@ -25,6 +25,7 @@ try{
     }),
 
   );
+
 
   if(response.statusCode==201){
     return true;
@@ -142,6 +143,15 @@ static Future<void> logout() async{
   await prefs.remove("is_administrator");
 
 } 
+static Future<bool> isLoggedIn()async{
+  final pref=await SharedPreferences.getInstance();
+  return pref.containsKey("access_token");
+}
+
+static Future<bool>isAdmin()async{
+  final prefs=await SharedPreferences.getInstance();
+  return prefs.getBool("is_administrator")??false;
+}
 
 
 
