@@ -31,7 +31,7 @@ try{
     return true;
   }
   else if(response.statusCode==409){
-    //i think 409 is for same username and email in the flask app
+    //I think 409 is for same username and email in the flask app
     final data=jsonDecode(response.body);
     throw Exception(data["error"]??"username already exists!");
   }
