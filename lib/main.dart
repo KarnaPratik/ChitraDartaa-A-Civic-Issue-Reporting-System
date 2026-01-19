@@ -3,12 +3,24 @@ import 'package:chitradartaa/frontend/citizen.dart';
 import 'package:chitradartaa/frontend/admin.dart';
 import 'package:chitradartaa/frontend/login.dart';
 import 'package:chitradartaa/frontend/signup.dart';
-void main() {
-  runApp(const MyApp());
+import 'package:chitradartaa/frontend/auth.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final bool loggedIn = await AuthService.isLoggedIn();
+  final bool adminStatus = await AuthService.isAdmin();
+
+String startRoute = '/login';
+if (loggedIn) {
+    startRoute = adminStatus ? '/admin' : '/citizen';
+  }
+runApp(MyApp(initialRoute: startRoute));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final String initialRoute; 
+  
+  const MyApp({super.key, required this.initialRoute});
 
   @override
   State<MyApp> createState() => _MyWidgetState();
@@ -19,7 +31,7 @@ class _MyWidgetState extends State<MyApp> {
   Widget build(BuildContext context) {
     return  MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: "/login",
+      initialRoute: widget.initialRoute,
 
       routes:{
        "/login":(context)=>  MyLogin(),

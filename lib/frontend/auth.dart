@@ -148,12 +148,14 @@ static Future<void> logout() async{
 } 
 static Future<bool> isLoggedIn()async{ //loggedin ==== locked in , ain't vibecoded *wink* *wink*
   final pref=await SharedPreferences.getInstance();
-  return pref.containsKey("access_token");
+  String? token=pref.getString("access_token");
+  return  token!=null && token.isNotEmpty ;
 }
 
 static Future<bool>isAdmin()async{
   final prefs=await SharedPreferences.getInstance();
-  return prefs.getBool("is_administrator")??false;
+  String? adminStr = prefs.getString("is_administrator");
+  return adminStr == "true";
 }
 
 
