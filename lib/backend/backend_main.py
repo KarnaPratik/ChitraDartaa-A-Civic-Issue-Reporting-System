@@ -25,7 +25,7 @@ def create_app():
      methods=["GET", "POST", "OPTIONS"])
 
 
-    #here adding this to add other backend files for inference adding this so i can add later into the future
+    #here adding this to add other backend files for inference adding this so i can add later into the future, fuck you mahesh
     from auth import auth_bp
     app.register_blueprint(auth_bp)
 

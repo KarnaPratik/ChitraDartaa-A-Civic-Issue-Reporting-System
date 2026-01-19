@@ -31,7 +31,7 @@ try{
     return true;
   }
   else if(response.statusCode==409){
-    //i think 409 is for same username and email in the flask app
+    //I think 409 is for same username and email in the flask app
     final data=jsonDecode(response.body);
     throw Exception(data["error"]??"username already exists!");
   }
@@ -83,7 +83,7 @@ catch(e){
     }
 
     else if (response.statusCode==401){
-      throw Exception("Invalid username!! or password");
+      throw Exception("Invalid username or password!!");
     }
     else{
       final data=jsonDecode(response.body);
@@ -117,7 +117,7 @@ catch(e){
       return jsonDecode(response.body);
     }
     else if(response.statusCode==401){
-      await logout();// not written this function yet will do it later
+      await logout();
       throw Exception("Session has expired, login again!");
     }
     else{

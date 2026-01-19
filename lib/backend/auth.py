@@ -1,5 +1,4 @@
 from flask import Flask, Blueprint,current_app,request,jsonify
-from backend_main import db
 from werkzeug.security import check_password_hash, generate_password_hash
 import jwt
 from datetime import datetime, timedelta, timezone
@@ -26,7 +25,7 @@ class User(db.Model):
 #for signup
 @auth_bp.route("/signup",methods=["POST"])
 def signup():
-    #for signup ig we gotta expect username, email and password and from sign up we just assign citizens as only citizens can sign up for administrator we have decided to add them separately
+    #for signup ig we gotta expect username, email and password and from sign up we just assign citizens as only citizens can sign up, for administrator we have decided to add them separately
     data=request.get_json()
     if not data or not data.get("username") or not data.get("email") or not data.get("password"):
         return jsonify({"error":"Incomplete info"})
@@ -97,7 +96,7 @@ def create_access_token(user):
 
      payload={
           "username":user,
-          "exp":datetime.now(timezone.utc)+timedelta(hours=44),
+          "exp":datetime.now(timezone.utc)+timedelta(hours=168),
           "iat":datetime.now(timezone.utc)
      }
 
@@ -149,9 +148,6 @@ def token_required(f):
 @auth_bp.route("/whoami",methods=["GET"])
 @token_required
 def whoami():
-     """this will return  current user information but would require the token
-     for now i have not added decoder yet but this can be used for later
-     """
 
      username=request.user
      user=User.query.filter_by(username=username).first()
