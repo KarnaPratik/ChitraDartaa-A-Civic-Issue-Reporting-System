@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; //for camera and gallery access
-import 'package:geolocator/geolocator.dart'; //for gps coordinates
-import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart'; // For camera and gallery access
+import 'package:geolocator/geolocator.dart'; // For GPS coordinates
+import 'package:google_fonts/google_fonts.dart'; // Modern typography
 import 'dart:io';
-
-
+import 'package:chitradartaa/frontend/auth.dart';
 class MyCitizen extends StatefulWidget {
   const MyCitizen({super.key});
 
@@ -13,52 +12,73 @@ class MyCitizen extends StatefulWidget {
 }
 
 class _MyCitizenState extends State<MyCitizen> {
-  //STATE VARIABLES
+  // --- STATE VARIABLES ---
+  int _selectedIndex = 0; // NEW: Controls the BottomNavigationBar tabs
   File? _selectedImage;
   final _descriptionController = TextEditingController();
-  String _currentAddress = "No location set";
-  bool _isAnalyzing = false; // tracking ML PROCESSING state
-  bool _isLocating = false; // tracking GPs fetching state
+  String _currentAddress = "Tap to pin location";
+  bool _isAnalyzing = false; // Tracks ML processing state
+  
+  // NEW: AI Prediction placeholders for future model integration
+  double _confidenceScore = 0.0;
+  String _prediction = "Awaiting image...";
 
   @override
-  void dispose(){
+  void dispose() {
     _descriptionController.dispose();
     super.dispose();
   }
-  //PERMISSIONS AND IMAGE HANDLING
-  // handling the user interaction for picking an image
-  Future<void> _pickImage(ImageSource source) async{
-    try{
+
+  @override
+void initState() {
+  super.initState();
+  _checkAuth();
+} //for bypassing
+
+Future<void> _checkAuth() async {
+  bool loggedIn = await AuthService.isLoggedIn();
+  if (!loggedIn) {
+    // If no token is found, they are trespassing!
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+}
+
+  // --- CORE LOGIC METHODS ---
+
+  // Unified Image Picker: Handles both selection and triggering AI/GPS logic
+  Future<void> _pickImage(ImageSource source) async {
+    try {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
         source: source,
-        imageQuality: 90, //compressing to save bandwidth
+        imageQuality: 90,
       );
-      if (image!= null) {
+      
+      if (image != null) {
         setState(() {
           _selectedImage = File(image.path);
-          _isAnalyzing = true; //ML loading animation
+          _isAnalyzing = true; // Show loading animation for ML
         });
-        await _runMLModelPlaceholder();
+
+        // NEW: Simulated ML Model integration
+        await Future.delayed(const Duration(seconds: 2)); 
+        setState(() {
+          _isAnalyzing = false;
+          _prediction = "Pothole Detected"; // Result from model
+          _confidenceScore = 0.92; // Reliability of model
+        });
+
+        // NEW: Automatically trigger location fetching after photo is taken
         await _determinePosition();
       }
-    } catch(e) {
-      _showSnackBar("Error selecting image: $e", Colors.red);
+    } catch (e) {
+      _showSnackBar("Error: $e", Colors.red);
     }
   }
-  Future<void> _runMLModelPlaceholder() async {
-    await Future.delayed(const Duration(seconds: 2)); //simulate ai processing
-    setState((){
-      _isAnalyzing = false;
-      //auto-filling details based on recognition
-      _descriptionController.text = "AI Detection: Pothole";
-    });
-  }
 
-  //geolocator logic
-//handling permission and getting the lat/longi_tude metadata
+  // Unified Location Logic: Handles permissions and fetching coordinates
   Future<void> _determinePosition() async {
-    setState(() => _isLocating = true);
     try {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -66,113 +86,235 @@ class _MyCitizenState extends State<MyCitizen> {
       }
       Position position = await Geolocator.getCurrentPosition();
       setState(() {
-        _currentAddress = "Latitude: ${position.latitude.toStringAsFixed(3)}, Longitude: ${position.longitude.toStringAsFixed(3)}";
-        _isLocating = false;
+        _currentAddress = "Lat: ${position.latitude.toStringAsFixed(3)}, Long: ${position.longitude.toStringAsFixed(3)}";
       });
     } catch (e) {
-      setState(() => _isLocating = false );
-      _showSnackBar("Could NOT fetch location", Colors.orange);
+      _showSnackBar("Could not fetch location", Colors.orange);
     }
   }
-  //adding: utility methods
-  void _showSnackBar(String message, Color color){
+
+  // Unified Snackbar for feedback
+  void _showSnackBar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: color),
+      SnackBar(content: Text(message), backgroundColor: color, behavior: SnackBarBehavior.floating),
     );
   }
 
-  //hi, lol.
-  @override
-  Widget build(BuildContext context){
-    return Scaffold(
+  // Logic to handle final submission
+  void _submitReport() {
+    _showSnackBar("Report Submitted Successfully", Colors.green);
+    setState(() {
+      _selectedImage = null;
+      _descriptionController.clear();
+      _selectedIndex = 1; // NEW: Automatically jump to 'My Reports' tab after submission
+    });
+  }
 
+  // --- UI BUILDING ---
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA), // NEW: Modern off-white background
       appBar: AppBar(
-        title: Text("Report Issue", style: GoogleFonts.poppins()),
-        backgroundColor: Colors.red,
+        title: Text("CitizenConnect", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
-        leading: const Icon(Icons.bug_report),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.redAccent),
+            onPressed: () async {
+    await AuthService.logout(); // This removes the token from SharedPreferences
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, '/login'); // Send back to login
+  }
+          )
+        ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            //image preview box
-            GestureDetector(
-              onTap: () => _showPickerOptions(),
-              child: Container(
-                height: 200,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(15),
-                  image: _selectedImage != null
-                      ? DecorationImage(image: FileImage(_selectedImage!), fit: BoxFit.cover)
-                      :null,
-                ),
-                child: _selectedImage == null
-                    ? const Icon(Icons.add_a_photo, size: 50, color: Colors.grey)
-                    :null,
-              ),
-            ),
-
-            if(_isAnalyzing) const LinearProgressIndicator(),
-
-            const SizedBox(height: 20),
-
-            //description
-            TextField(
-              controller: _descriptionController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: "Issue description...",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-            const SizedBox(height:20),
-
-            //location display
-            ListTile(
-              leading: const Icon(Icons.location_on, color: Colors.red),
-              title: Text(_currentAddress),
-              trailing: _isLocating ? const CircularProgressIndicator() : null,
-            ),
-            const SizedBox(height: 30),
-
-            //submit button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(15)),
-                onPressed: () => _showSnackBar("Report Submitted", Colors.green),
-                child: const Text("Submit Report"),
-              ),
-            )
-          ],
-        ),
+      body: IndexedStack(
+        index: _selectedIndex, // Keeps tab states alive
+        children: [
+          _buildReportTab(),        // Submission Form
+          _buildContributionsTab(), // NEW: Status Tracking Timeline
+          _buildSocialCircleTab(),  // NEW: Social/Nearby Tab
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) => setState(() => _selectedIndex = index),
+        selectedItemColor: Colors.blueAccent,
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: "Submit"), // FIXED: Valid icon
+          BottomNavigationBarItem(icon: Icon(Icons.fact_check_outlined), label: "My Impact"),
+          BottomNavigationBarItem(icon: Icon(Icons.groups_outlined), label: "Social"),
+        ],
       ),
     );
   }
 
-  //helper func to show Bottomsheet for gallery
-
-  void _showPickerOptions() {
-    showModalBottomSheet(context: context, builder: (context) => SafeArea(
-      child: Wrap(
+  // TAB 1: SUBMISSION FORM
+  Widget _buildReportTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ListTile(
-            leading: const Icon(Icons.camera),
-            title: const Text('Camera'),
-            onTap: () { Navigator.pop(context); _pickImage(ImageSource.camera); },
+          _buildImpactCard(), // NEW: Gamified impact card
+          const SizedBox(height: 25),
+          Text("Report New Issue", style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 15),
+          
+          // Image Preview
+          GestureDetector(
+            onTap: () => _pickImage(ImageSource.camera),
+            child: Container(
+              height: 200, width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white, borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.grey[200]!),
+                image: _selectedImage != null ? DecorationImage(image: FileImage(_selectedImage!), fit: BoxFit.cover) : null,
+              ),
+              child: _selectedImage == null ? const Icon(Icons.camera_alt_outlined, size: 50, color: Colors.grey) : null,
+            ),
           ),
-          ListTile(
-            leading: const Icon(Icons.photo_library),
-            title: const Text('Gallery'),
-            onTap: () {Navigator.pop(context); _pickImage(ImageSource.gallery); },
+          
+          if (_isAnalyzing) const LinearProgressIndicator(),
+
+          // NEW: Prediction Metadata Display
+          if (_selectedImage != null && !_isAnalyzing) _buildAIPanel(),
+
+          const SizedBox(height: 20),
+          _buildLocationTile(),
+          
+          const SizedBox(height: 20),
+          TextField(
+            controller: _descriptionController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: "Additional details...",
+              filled: true, fillColor: Colors.white,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+            ),
+          ),
+          
+          const SizedBox(height: 25),
+          SizedBox(
+            width: double.infinity, height: 55,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+              onPressed: _submitReport,
+              child: const Text("Submit Report", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  // NEW: Gamified Header
+  Widget _buildImpactCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Color(0xFF6A11CB), Color(0xFF2575FC)]),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          const CircleAvatar(backgroundColor: Colors.white24, child: Icon(Icons.emoji_events, color: Colors.white)),
+          const SizedBox(width: 15),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Level 4 Citizen", style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+              Text("12 Issues Solved", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 12)),
+            ],
           ),
         ],
       ),
-    ),
     );
+  }
+
+  // NEW: AI Feedback Panel
+  Widget _buildAIPanel() {
+    return Container(
+      margin: const EdgeInsets.only(top: 15),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(15)),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text("AI Result: $_prediction", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+          Text("${(_confidenceScore * 100).toInt()}% Confidence"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationTile() {
+    return Container(
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
+      child: ListTile(
+        leading: const Icon(Icons.location_on, color: Colors.redAccent),
+        title: Text(_currentAddress, style: const TextStyle(fontSize: 14)),
+        trailing: const Icon(Icons.my_location),
+        onTap: _determinePosition,
+      ),
+    );
+  }
+
+  // TAB 2: CONTRIBUTIONS TIMELINE
+  Widget _buildContributionsTab() {
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        Text("Active Reports", style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 20),
+        _buildTimelineCard("Pothole #102", "Team Dispatched"),
+        _buildTimelineCard("Illegal Trash #99", "Solved"),
+      ],
+    );
+  }
+
+  Widget _buildTimelineCard(String title, String status) {
+    bool isSolved = status == "Solved";
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: ExpansionTile(
+        leading: Icon(isSolved ? Icons.check_circle : Icons.pending, color: isSolved ? Colors.green : Colors.orange),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text("Status: $status"),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Column(
+              children: [
+                _buildStatusStep("Submitted", true),
+                _buildStatusStep("Official Viewed", true),
+                _buildStatusStep("Team Dispatched", !isSolved),
+                _buildStatusStep("Solved", isSolved),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusStep(String label, bool done) {
+    return Row(
+      children: [
+        Icon(done ? Icons.check_circle : Icons.circle_outlined, size: 16, color: done ? Colors.blue : Colors.grey),
+        const SizedBox(width: 10, height: 25),
+        Text(label, style: TextStyle(color: done ? Colors.black : Colors.grey)),
+      ],
+    );
+  }
+
+  // TAB 3: SOCIAL
+  Widget _buildSocialCircleTab() {
+    return const Center(child: Text("Nearby community reports appearing soon!"));
   }
 }
