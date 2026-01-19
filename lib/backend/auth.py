@@ -1,5 +1,4 @@
 from flask import Flask, Blueprint,current_app,request,jsonify
-from backend_main import db
 from werkzeug.security import check_password_hash, generate_password_hash
 import jwt
 from datetime import datetime, timedelta, timezone
