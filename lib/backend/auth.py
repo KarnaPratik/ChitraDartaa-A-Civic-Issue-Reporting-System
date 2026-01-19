@@ -63,25 +63,26 @@ def login():
         here we get json with username and possword with like role so if either its citizen or an administrator
         '''
         data=request.get_json()
-        if not data or not data.get("username") or not data.get("password") or  "role" not in data:
+        if not data or not data.get("email") or not data.get("password") or  "role" not in data:
              return jsonify({"error":"Invalid Request!"}),401
-        username=data["username"]
+        email=data["email"]
         password=data["password"]
         role_=data["role"]
-
-        user=User.query.filter_by(username=username).first()
+     
+        user=User.query.filter_by(email=email).first()
  
 
         if not user or not  check_password_hash(user.password_hash,password) or role_!=user.is_administrator:
              return jsonify({"error":"Invalid username or password!"}),401
         
-        access_token=create_access_token(username)
+        access_token=create_access_token(user.username)
         return jsonify(
              {
                   "message":"Login Sucessful!",
                   "token":access_token,
-                  "username":username,
+                  "username":user.username,
                   "is_admin":user.is_administrator,
+                  "email":email,
 
              }
         ),200

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:chitradartaa/frontend/signup.dart';
 import 'package:chitradartaa/frontend/forgot_password.dart'; // Create this file for forgot password flow
+import 'package:chitradartaa/frontend/auth.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+
 
 class MyLogin extends StatefulWidget {
   const MyLogin({super.key});
@@ -23,25 +27,49 @@ class _MyLoginState extends State<MyLogin> {
     _passwordController.dispose();
     super.dispose();
   }
-
+void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+        ),
+        backgroundColor: Colors.redAccent.withOpacity(0.9),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
   // Login function
   Future<void> _handleLogin() async {
+     final RegExp emailRegExp = RegExp(r"^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+      if(!emailRegExp.hasMatch(_emailController.text.trim())){
+    _showError("Incorrect Email");
+    return;
+  }
+  if (_passwordController.text.isEmpty) {
+    _showError('Please enter a password');
+    return;
+  }
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
       try {
-        // Add your login API call here
-        // Example:
-        // await AuthService.login(
-        //   email: _emailController.text,
-        //   password: _passwordController.text,
-        //   role: _selectedRole,
-        // );
+       bool isAdmin = _selectedRole == 'Administrator';
+        await AuthService.logIn(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          isAdministrator: isAdmin,
+        );
 
-        // Simulate API call
-        await Future.delayed(const Duration(seconds: 2));
+
 
         // On success, navigate to home screen
         if (mounted) {
@@ -59,6 +87,18 @@ class _MyLoginState extends State<MyLogin> {
             ),
           );
         }
+
+                  if (isAdmin) {
+            // Navigate to admin dashboard
+            if(!mounted) return;
+            Navigator.pushReplacementNamed(context, '/admin');
+        
+          } else {
+            // Navigate to citizen home
+            if(!mounted) return;
+            Navigator.pushReplacementNamed(context, '/citizen');
+      
+          }
       } catch (e) {
         // Show error message
         if (mounted) {

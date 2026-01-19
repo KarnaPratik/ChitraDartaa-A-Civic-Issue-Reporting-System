@@ -53,7 +53,7 @@ catch(e){
 
   //for login
  static Future <bool>logIn({
-  required String username,
+  required String email,
   required String password,
   required bool isAdministrator,
  }) async{
@@ -61,7 +61,7 @@ catch(e){
     final response=await http.post(
       Uri.parse("$url/auth/login"),
       headers: {"Content-Type":"application/json"},
-      body: jsonEncode({"username":username,
+      body: jsonEncode({"email":email,
                       "password": password, 
                       "role":isAdministrator,
       }
@@ -73,11 +73,13 @@ catch(e){
       final data=jsonDecode(response.body);
       String token=data["token"];
       String is_admin=data["is_admin"];
+      String username=data["user"];
 
       final pref=await SharedPreferences.getInstance();
       await pref.setString("access_token",token);
-      await pref.setString("username", username);
+      await pref.setString("user", username);
       await pref.setString("is_administrator",is_admin);
+      await pref.setString("email",email);
       return true;
 
     }
@@ -141,6 +143,7 @@ static Future<void> logout() async{
   await prefs.remove("access_token");
   await prefs.remove("username");
   await prefs.remove("is_administrator");
+  await prefs.remove("email");
 
 } 
 static Future<bool> isLoggedIn()async{
