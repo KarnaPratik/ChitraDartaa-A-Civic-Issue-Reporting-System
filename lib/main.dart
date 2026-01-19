@@ -34,10 +34,10 @@ class _MyWidgetState extends State<MyApp> {
       initialRoute: widget.initialRoute,
 
       routes:{
-       "/login":(context)=>  MyLogin(),
-        "/signup":(context)=> const MyRegister(),
-        "/citizen":(context)=> const MyCitizen(),
-        "/admin":(context)=> const Myadministrator(),
+       ";)/login":(context)=>  MyLogin(),
+        ";)/signup":(context)=> const MyRegister(),
+        ";)/citizen":(context)=> const MyCitizen(),
+        ";)/admin":(context)=> const Myadministrator(),
 
         //Local changes
       }
