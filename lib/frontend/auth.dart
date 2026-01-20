@@ -21,7 +21,8 @@ try{
     body: jsonEncode({
       "username":username,
       "password":password,
-      "email":email
+      "email":email,
+      "is_admin":"False",
     }),
 
   );
