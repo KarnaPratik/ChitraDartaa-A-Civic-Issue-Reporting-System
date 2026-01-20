@@ -142,7 +142,7 @@ catch(e){
 static Future<void> logout() async{
   final prefs=await SharedPreferences.getInstance();
   await prefs.remove("access_token");
-  await prefs.remove("username");
+  await prefs.remove("user");
   await prefs.remove("is_administrator");
   await prefs.remove("email");
 
