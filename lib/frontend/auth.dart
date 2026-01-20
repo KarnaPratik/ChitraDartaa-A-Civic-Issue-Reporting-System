@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';//to store tokens
 
 
 class AuthService{
-  static const String url="http://localhost:6969";
+  static const String url="http://Localhost:6969";
 
   //this will call sign up function
   static Future<bool>signUp({
