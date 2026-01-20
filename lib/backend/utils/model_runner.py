@@ -9,7 +9,7 @@ import os
 
 ISSUE_NON_ISSUE_PATH1 = "issue_non_issue_model1_20split_96.07accuracy.keras"
 ISSUE_NON_ISSUE_PATH2 = "issue_non_issue_model2_40split_96.76accuracy.keras"
-CLASS_MODEL_PATH = "potholes-garbage-classifier.h5"
+CLASS_MODEL_PATH = "potholes_garbage_classifier.h5"
 # SEG_MODEL_PATH = "segmentation_model.h5"
 
 path = os.path.dirname(os.path.realpath(__file__))
