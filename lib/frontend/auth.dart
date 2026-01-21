@@ -153,6 +153,10 @@ static Future<bool> isLoggedIn()async{ //loggedin ==== locked in , ain't vibecod
   String? token=pref.getString("access_token");
   return  token!=null && token.isNotEmpty ;
 }
+static Future<String?> getToken() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString("access_token");
+}
 
 static Future<bool>isAdmin()async{
   final prefs=await SharedPreferences.getInstance();

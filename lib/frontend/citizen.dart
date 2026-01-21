@@ -4,8 +4,12 @@ import 'package:geolocator/geolocator.dart'; // For GPS coordinates
 import 'package:google_fonts/google_fonts.dart'; // Modern typography
 import 'dart:io';
 import 'package:chitradartaa/frontend/auth.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 class MyCitizen extends StatefulWidget {
   const MyCitizen({super.key});
+  
 
   @override
   State<MyCitizen> createState() => _MyCitizenState();
@@ -13,21 +17,15 @@ class MyCitizen extends StatefulWidget {
 
 class _MyCitizenState extends State<MyCitizen> {
   // --- STATE VARIABLES ---
-  int _selectedIndex = 0; // NEW: Controls the BottomNavigationBar tabs
+  int _selectedIndex = 0;
   File? _selectedImage;
   final _descriptionController = TextEditingController();
   String _currentAddress = "Tap to pin location";
   bool _isAnalyzing = false; // Tracks ML processing state
-  
-  // NEW: AI Prediction placeholders for future model integration
+
   double _confidenceScore = 0.0;
   String _prediction = "Awaiting image...";
 
-  @override
-  void dispose() {
-    _descriptionController.dispose();
-    super.dispose();
-  }
 
   @override
 void initState() {
@@ -37,12 +35,16 @@ void initState() {
 
 Future<void> _checkAuth() async {
   bool loggedIn = await AuthService.isLoggedIn();
-  if (!loggedIn) {
-    // If no token is found, they are trespassing!
-    if (!mounted) return;
+  if (!loggedIn && mounted) {
     Navigator.pushReplacementNamed(context, '/login');
   }
 }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
+  }
 
   // --- CORE LOGIC METHODS ---
 
@@ -61,16 +63,9 @@ Future<void> _checkAuth() async {
           _isAnalyzing = true; // Show loading animation for ML
         });
 
-        // NEW: Simulated ML Model integration
-        await Future.delayed(const Duration(seconds: 2)); 
-        setState(() {
-          _isAnalyzing = false;
-          _prediction = "Pothole Detected"; // Result from model
-          _confidenceScore = 0.92; // Reliability of model
-        });
-
-        // NEW: Automatically trigger location fetching after photo is taken
+        // Automatically trigger location fetching after photo is taken
         await _determinePosition();
+        await _sendForInference();
       }
     } catch (e) {
       _showSnackBar("Error: $e", Colors.red);
@@ -92,6 +87,54 @@ Future<void> _checkAuth() async {
       _showSnackBar("Could not fetch location", Colors.orange);
     }
   }
+
+  
+  // -------------------- BASE64 --------------------
+
+  Future<String> image_to_base64(File image) async {
+    final bytes = await image.readAsBytes();
+    return base64Encode(bytes);
+  }
+
+  // -------------------- BACKEND CALL --------------------
+
+  Future<void> _sendForInference() async {
+    try {
+      setState(() => _isAnalyzing = true);
+
+      final token = await AuthService.getToken();
+      final base64Image = await image_to_base64(_selectedImage!);
+
+      final response = await http.post(
+        Uri.parse("http://10.0.2.2:6969/api/infer"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({
+          "image": base64Image,
+          "location": _currentAddress,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception("Inference failed");
+      }
+
+      final data = jsonDecode(response.body);
+
+      setState(() {
+        _isAnalyzing = false;
+        _prediction = "Issue Detected";
+        _confidenceScore = data["confidence_score"];
+      });
+
+    } catch (e) {
+      setState(() => _isAnalyzing = false);
+      _showSnackBar("Inference failed", Colors.red);
+    }
+  }
+
 
   // Unified Snackbar for feedback
   void _showSnackBar(String message, Color color) {
