@@ -8,6 +8,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart'; // NEW: Added for username access
 
+
 class MyCitizen extends StatefulWidget {
   const MyCitizen({super.key});
 
@@ -27,7 +28,7 @@ class _MyCitizenState extends State<MyCitizen> {
   bool _isLoading = true;
 
   // NEW: Configurable backend URL - CHANGE THIS BASED ON YOUR SETUP
-  static const String backendUrl = "https://wrongly-unapprovable-lizeth.ngrok-free.dev"; // Using ngrok URL from AuthService
+  static const String backendUrl = AuthService.url; // Using ngrok URL from AuthService
   // For Android Emulator without ngrok: "http://10.0.2.2:6969"
   // For physical device without ngrok: "http://COMPUTER_IP:6969"
 
