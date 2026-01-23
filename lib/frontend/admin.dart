@@ -1,5 +1,7 @@
 // import 'package:flutter/material.dart';
-// import 'package:google_maps_flutter/google_maps_flutter.dart';
+// import 'package:flutter_map/flutter_map.dart';
+// import 'package:latlong2/latlong.dart';
+// import 'package:chitradartaa/frontend/auth.dart'; // Ensure this path is correct
 
 // class Myadministrator extends StatefulWidget {
 //   const Myadministrator({super.key});
@@ -9,9 +11,12 @@
 // }
 
 // class _MyWidgetState extends State<Myadministrator> {
-//   GoogleMapController? _mapController;
-//   final Set<Marker> _markers = {};
+//   // OSM Map Controller
+//   final MapController _mapController = MapController();
   
+//   // Auth Guard State
+//   bool _isLoading = true;
+
 //   List<Map<String, dynamic>> issues = [
 //     {
 //       'id': 1,
@@ -54,89 +59,23 @@
 //   @override
 //   void initState() {
 //     super.initState();
-//     _updateMarkers();
+//     _checkAuth();
 //   }
 
-//   void _updateMarkers() {
-//     _markers.clear();
-//     for (var issue in issues) {
-//       _markers.add(
-//         Marker(
-//           markerId: MarkerId(issue['id'].toString()),
-//           position: LatLng(
-//             issue['location']['lat'],
-//             issue['location']['lng'],
-//           ),
-//           icon: BitmapDescriptor.defaultMarkerWithHue(
-//             _getMarkerColor(issue['status']),
-//           ),
-//           infoWindow: InfoWindow(
-//             title: issue['title'],
-//             snippet: issue['status'],
-//           ),
-//         ),
-//       );
-//     }
-//     setState(() {});
-//   }
-
-//   double _getMarkerColor(String status) {
-//     switch (status) {
-//       case 'reported':
-//         return BitmapDescriptor.hueRed;
-//       case 'deployed':
-//         return BitmapDescriptor.hueOrange;
-//       case 'underprocessed':
-//         return BitmapDescriptor.hueBlue;
-//       case 'resolved':
-//         return BitmapDescriptor.hueGreen;
-//       default:
-//         return BitmapDescriptor.hueRed;
-//     }
-//   }
-
-//   Color _getStatusColor(String status) {
-//     switch (status) {
-//       case 'reported':
-//         return const Color(0xFFEF4444);
-//       case 'deployed':
-//         return const Color(0xFFF59E0B);
-//       case 'underprocessed':
-//         return const Color(0xFF3B82F6);
-//       case 'resolved':
-//         return const Color(0xFF10B981);
-//       default:
-//         return Colors.grey;
-//     }
-//   }
-
-//   String _getStatusLabel(String status) {
-//     switch (status) {
-//       case 'reported':
-//         return 'Reported';
-//       case 'deployed':
-//         return 'Deployed';
-//       case 'underprocessed':
-//         return 'Under Process';
-//       case 'resolved':
-//         return 'Resolved';
-//       default:
-//         return status;
-//     }
-//   }
-
-//   IconData _getStatusIcon(String status) {
-//     switch (status) {
-//       case 'reported':
-//         return Icons.error_outline;
-//       case 'deployed':
-//         return Icons.navigation;
-//       case 'underprocessed':
-//         return Icons.access_time;
-//       case 'resolved':
-//         return Icons.check_circle_outline;
-//       default:
-//         return Icons.info_outline;
+//   // Trespassing Check Logic
+//   Future<void> _checkAuth() async {
+//     bool loggedIn = await AuthService.isLoggedIn();
+//     if (!loggedIn) {
+//       if (!mounted) return;
+//       // If not logged in, redirect to login page immediately
+//       Navigator.pushReplacementNamed(context, '/login');
+//     } else {
+//       // If logged in, stop loading and show the admin panel
+//       if (mounted) {
+//         setState(() {
+//           _isLoading = false;
+//         });
+//       }
 //     }
 //   }
 
@@ -145,17 +84,68 @@
 //       int index = issues.indexWhere((issue) => issue['id'] == id);
 //       if (index != -1) {
 //         issues[index]['status'] = newStatus;
-//         _updateMarkers();
 //       }
 //     });
 //   }
 
+//   // --- UI Styling Helpers ---
+
+//   Color _getMarkerColor(String status) {
+//     switch (status) {
+//       case 'reported': return const Color(0xFFEF4444);
+//       case 'deployed': return const Color(0xFFF59E0B);
+//       case 'underprocessed': return const Color(0xFF3B82F6);
+//       case 'resolved': return const Color(0xFF10B981);
+//       default: return Colors.red;
+//     }
+//   }
+
+//   Color _getStatusColor(String status) {
+//     switch (status) {
+//       case 'reported': return const Color(0xFFEF4444);
+//       case 'deployed': return const Color(0xFFF59E0B);
+//       case 'underprocessed': return const Color(0xFF3B82F6);
+//       case 'resolved': return const Color(0xFF10B981);
+//       default: return Colors.grey;
+//     }
+//   }
+
+//   String _getStatusLabel(String status) {
+//     switch (status) {
+//       case 'reported': return 'Reported';
+//       case 'deployed': return 'Deployed';
+//       case 'underprocessed': return 'Under Process';
+//       case 'resolved': return 'Resolved';
+//       default: return status;
+//     }
+//   }
+
+//   IconData _getStatusIcon(String status) {
+//     switch (status) {
+//       case 'reported': return Icons.error_outline;
+//       case 'deployed': return Icons.navigation;
+//       case 'underprocessed': return Icons.access_time;
+//       case 'resolved': return Icons.check_circle_outline;
+//       default: return Icons.info_outline;
+//     }
+//   }
+
 //   @override
 //   Widget build(BuildContext context) {
+//     // Prevent trespassing users from seeing the content during the check
+//     if (_isLoading) {
+//       return const Scaffold(
+//         body: Center(
+//           child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+//         ),
+//       );
+//     }
+
 //     return Scaffold(
 //       backgroundColor: const Color(0xFFF8F9FA),
 //       body: Column(
 //         children: [
+//           // Header Section
 //           Container(
 //             decoration: const BoxDecoration(
 //               gradient: LinearGradient(
@@ -164,69 +154,82 @@
 //                 end: Alignment.bottomRight,
 //               ),
 //               boxShadow: [
-//                 BoxShadow(
-//                   color: Colors.black12,
-//                   blurRadius: 10,
-//                   offset: Offset(0, 4),
-//                 ),
+//                 BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4)),
 //               ],
 //             ),
 //             padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
 //               children: [
-//                 const Text(
-//                   'CitizenConnect Admin',
-//                   style: TextStyle(
-//                     color: Colors.white,
-//                     fontSize: 24,
-//                     fontWeight: FontWeight.bold,
-//                   ),
+//                 Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     const Text(
+//                       'CitizenConnect Admin',
+//                       style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+//                     ),
+//                     const SizedBox(height: 4),
+//                     Text(
+//                       'Community Issue Management',
+//                       style: TextStyle(color: Colors.purple[100], fontSize: 14),
+//                     ),
+//                   ],
 //                 ),
-//                 const SizedBox(height: 4),
-//                 Text(
-//                   'Community Issue Management',
-//                   style: TextStyle(
-//                     color: Colors.purple[100],
-//                     fontSize: 14,
-//                   ),
-//                 ),
+//                 // Logout Button
+//                 IconButton(
+//                   icon: const Icon(Icons.logout, color: Colors.white),
+//                   onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+//                 )
 //               ],
 //             ),
 //           ),
+          
 //           Expanded(
 //             child: SingleChildScrollView(
 //               padding: const EdgeInsets.all(16),
 //               child: Column(
 //                 crossAxisAlignment: CrossAxisAlignment.start,
 //                 children: [
+//                   // Map Section
 //                   Container(
 //                     height: 320,
 //                     decoration: BoxDecoration(
 //                       color: Colors.white,
 //                       borderRadius: BorderRadius.circular(24),
-//                       boxShadow: const [
-//                         BoxShadow(
-//                           color: Colors.black12,
-//                           blurRadius: 8,
-//                           offset: Offset(0, 2),
-//                         ),
-//                       ],
+//                       boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
 //                     ),
 //                     child: ClipRRect(
 //                       borderRadius: BorderRadius.circular(24),
 //                       child: Stack(
 //                         children: [
-//                           GoogleMap(
-//                             initialCameraPosition: const CameraPosition(
-//                               target: LatLng(27.7172, 85.3240),
-//                               zoom: 13,
+//                           FlutterMap(
+//                             mapController: _mapController,
+//                             options: const MapOptions(
+//                               initialCenter: LatLng(27.7172, 85.3240),
+//                               initialZoom: 13,
 //                             ),
-//                             markers: _markers,
-//                             onMapCreated: (controller) {
-//                               _mapController = controller;
-//                             },
+//                             children: [
+//                               TileLayer(
+//                                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+//                                 userAgentPackageName: 'com.example.citizenconnect',
+//                               ),
+//                               MarkerLayer(
+//                                 markers: issues.map((issue) {
+//                                   return Marker(
+//                                     point: LatLng(issue['location']['lat'], issue['location']['lng']),
+//                                     width: 40,
+//                                     height: 40,
+//                                     child: Icon(
+//                                       Icons.location_on,
+//                                       color: _getMarkerColor(issue['status']),
+//                                       size: 40,
+//                                     ),
+//                                   );
+//                                 }).toList(),
+//                               ),
+//                             ],
 //                           ),
+//                           // Legend Overlay
 //                           Positioned(
 //                             bottom: 16,
 //                             right: 16,
@@ -234,27 +237,14 @@
 //                               decoration: BoxDecoration(
 //                                 color: Colors.white.withOpacity(0.95),
 //                                 borderRadius: BorderRadius.circular(16),
-//                                 boxShadow: const [
-//                                   BoxShadow(
-//                                     color: Colors.black12,
-//                                     blurRadius: 8,
-//                                     offset: Offset(0, 2),
-//                                   ),
-//                                 ],
+//                                 boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8)],
 //                               ),
 //                               padding: const EdgeInsets.all(12),
 //                               child: Column(
 //                                 crossAxisAlignment: CrossAxisAlignment.start,
 //                                 mainAxisSize: MainAxisSize.min,
 //                                 children: [
-//                                   const Text(
-//                                     'Status Legend',
-//                                     style: TextStyle(
-//                                       fontSize: 10,
-//                                       fontWeight: FontWeight.bold,
-//                                       color: Color(0xFF374151),
-//                                     ),
-//                                   ),
+//                                   const Text('Status Legend', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
 //                                   const SizedBox(height: 8),
 //                                   _buildLegendItem('Reported', const Color(0xFFEF4444)),
 //                                   _buildLegendItem('Deployed', const Color(0xFFF59E0B)),
@@ -271,11 +261,7 @@
 //                   const SizedBox(height: 24),
 //                   const Text(
 //                     'Active Issues',
-//                     style: TextStyle(
-//                       fontSize: 20,
-//                       fontWeight: FontWeight.bold,
-//                       color: Color(0xFF1F2937),
-//                     ),
+//                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
 //                   ),
 //                   const SizedBox(height: 16),
 //                   ...issues.map((issue) => _buildIssueCard(issue)).toList(),
@@ -294,22 +280,9 @@
 //       child: Row(
 //         mainAxisSize: MainAxisSize.min,
 //         children: [
-//           Container(
-//             width: 12,
-//             height: 12,
-//             decoration: BoxDecoration(
-//               color: color,
-//               shape: BoxShape.circle,
-//             ),
-//           ),
+//           Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
 //           const SizedBox(width: 8),
-//           Text(
-//             label,
-//             style: const TextStyle(
-//               fontSize: 10,
-//               color: Color(0xFF4B5563),
-//             ),
-//           ),
+//           Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF4B5563))),
 //         ],
 //       ),
 //     );
@@ -321,13 +294,7 @@
 //       decoration: BoxDecoration(
 //         color: Colors.white,
 //         borderRadius: BorderRadius.circular(24),
-//         boxShadow: const [
-//           BoxShadow(
-//             color: Colors.black12,
-//             blurRadius: 8,
-//             offset: Offset(0, 2),
-//           ),
-//         ],
+//         boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
 //       ),
 //       padding: const EdgeInsets.all(20),
 //       child: Column(
@@ -336,16 +303,7 @@
 //           Row(
 //             crossAxisAlignment: CrossAxisAlignment.start,
 //             children: [
-//               Expanded(
-//                 child: Text(
-//                   issue['title'],
-//                   style: const TextStyle(
-//                     fontSize: 16,
-//                     fontWeight: FontWeight.bold,
-//                     color: Color(0xFF1F2937),
-//                   ),
-//                 ),
-//               ),
+//               Expanded(child: Text(issue['title'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
 //               const SizedBox(width: 8),
 //               Container(
 //                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -354,55 +312,25 @@
 //                   borderRadius: BorderRadius.circular(20),
 //                 ),
 //                 child: Row(
-//                   mainAxisSize: MainAxisSize.min,
 //                   children: [
-//                     Icon(
-//                       _getStatusIcon(issue['status']),
-//                       size: 14,
-//                       color: _getStatusColor(issue['status']),
-//                     ),
+//                     Icon(_getStatusIcon(issue['status']), size: 14, color: _getStatusColor(issue['status'])),
 //                     const SizedBox(width: 4),
-//                     Text(
-//                       _getStatusLabel(issue['status']),
-//                       style: TextStyle(
-//                         fontSize: 12,
-//                         fontWeight: FontWeight.bold,
-//                         color: _getStatusColor(issue['status']),
-//                       ),
-//                     ),
+//                     Text(_getStatusLabel(issue['status']), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _getStatusColor(issue['status']))),
 //                   ],
 //                 ),
 //               ),
 //             ],
 //           ),
 //           const SizedBox(height: 8),
-//           Text(
-//             issue['description'],
-//             style: const TextStyle(
-//               fontSize: 14,
-//               color: Color(0xFF4B5563),
-//             ),
-//           ),
+//           Text(issue['description'], style: const TextStyle(fontSize: 14, color: Color(0xFF4B5563))),
 //           const SizedBox(height: 8),
 //           Row(
 //             children: [
 //               const Icon(Icons.access_time, size: 12, color: Color(0xFF6B7280)),
 //               const SizedBox(width: 4),
-//               Text(
-//                 issue['timestamp'],
-//                 style: const TextStyle(
-//                   fontSize: 12,
-//                   color: Color(0xFF6B7280),
-//                 ),
-//               ),
+//               Text(issue['timestamp'], style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
 //               const SizedBox(width: 16),
-//               Text(
-//                 'Reporter: ${issue['reporter']}',
-//                 style: const TextStyle(
-//                   fontSize: 12,
-//                   color: Color(0xFF6B7280),
-//                 ),
-//               ),
+//               Text('Reporter: ${issue['reporter']}', style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
 //             ],
 //           ),
 //           const SizedBox(height: 16),
@@ -414,27 +342,21 @@
 //                 _buildActionButton(
 //                   label: 'Deploy',
 //                   icon: Icons.navigation,
-//                   gradient: const LinearGradient(
-//                     colors: [Color(0xFFF97316), Color(0xFFF59E0B)],
-//                   ),
+//                   gradient: const LinearGradient(colors: [Color(0xFFF97316), Color(0xFFF59E0B)]),
 //                   onPressed: () => _updateIssueStatus(issue['id'], 'deployed'),
 //                 ),
 //               if (issue['status'] != 'underprocessed' && issue['status'] != 'resolved')
 //                 _buildActionButton(
 //                   label: 'Under Process',
 //                   icon: Icons.access_time,
-//                   gradient: const LinearGradient(
-//                     colors: [Color(0xFF3B82F6), Color(0xFF6366F1)],
-//                   ),
+//                   gradient: const LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF6366F1)]),
 //                   onPressed: () => _updateIssueStatus(issue['id'], 'underprocessed'),
 //                 ),
 //               if (issue['status'] != 'resolved')
 //                 _buildActionButton(
 //                   label: 'Mark Resolved',
 //                   icon: Icons.check_circle_outline,
-//                   gradient: const LinearGradient(
-//                     colors: [Color(0xFF10B981), Color(0xFF059669)],
-//                   ),
+//                   gradient: const LinearGradient(colors: [Color(0xFF10B981), Color(0xFF059669)]),
 //                   onPressed: () => _updateIssueStatus(issue['id'], 'resolved'),
 //                 ),
 //             ],
@@ -444,46 +366,28 @@
 //     );
 //   }
 
-//   Widget _buildActionButton({
-//     required String label,
-//     required IconData icon,
-//     required Gradient gradient,
-//     required VoidCallback onPressed,
-//   }) {
+//   Widget _buildActionButton({required String label, required IconData icon, required Gradient gradient, required VoidCallback onPressed}) {
 //     return InkWell(
 //       onTap: onPressed,
 //       child: Container(
 //         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-//         decoration: BoxDecoration(
-//           gradient: gradient,
-//           borderRadius: BorderRadius.circular(20),
-//           boxShadow: const [
-//             BoxShadow(
-//               color: Colors.black12,
-//               blurRadius: 6,
-//               offset: Offset(0, 2),
-//             ),
-//           ],
-//         ),
+//         decoration: BoxDecoration(gradient: gradient, borderRadius: BorderRadius.circular(20), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]),
 //         child: Row(
 //           mainAxisSize: MainAxisSize.min,
 //           children: [
 //             Icon(icon, size: 16, color: Colors.white),
 //             const SizedBox(width: 6),
-//             Text(
-//               label,
-//               style: const TextStyle(
-//                 fontSize: 14,
-//                 fontWeight: FontWeight.bold,
-//                 color: Colors.white,
-//               ),
-//             ),
+//             Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
 //           ],
 //         ),
 //       ),
 //     );
 //   }
 // }
+
+
+
+// =======
 
 
 import 'package:flutter/material.dart';
