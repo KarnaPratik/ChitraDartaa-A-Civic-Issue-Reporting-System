@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';//to store tokens
 
 class AuthService{
 
-  static const String url="https://azoic-corinna-unreconcilably.ngrok-free.dev";
+  static const String url="https://wrongly-unapprovable-lizeth.ngrok-free";
 
   //this will call sign up function
   static Future<bool>signUp({
@@ -165,9 +165,42 @@ static Future<bool>isAdmin()async{
 }
 
 
+//For admin enpoint
+static Future<List<Map<String, dynamic>>> fetchIssues() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$url/admin/reports'),
+        headers: {'Content-Type': 'application/json'},
+      );
 
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return List<Map<String, dynamic>>.from(data['reports']);
+      } else {
+        throw Exception('Failed to load issues');
+      }
+    } catch (e) {
+      print('Error fetching issues: $e');
+      rethrow;
+    }
+  }
 
+  static Future<bool> updateIssueStatus(int id, String status) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$url/admin/reports/$id'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'status': status,
+          'is_resolved': status == 'resolved'
+        }),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error updating issue: $e');
+      return false;
+    }
+  }
 }
 
-//Added ngrok
-//Good morning guys

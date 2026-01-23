@@ -17,44 +17,7 @@ class _MyWidgetState extends State<Myadministrator> {
   // Auth Guard State
   bool _isLoading = true;
 
-  List<Map<String, dynamic>> issues = [
-    {
-      'id': 1,
-      'title': 'Pothole on Main Street',
-      'description': 'Large pothole causing traffic issues',
-      'location': {'lat': 27.7172, 'lng': 85.3240},
-      'status': 'reported',
-      'timestamp': '2 hours ago',
-      'reporter': 'John Doe'
-    },
-    {
-      'id': 2,
-      'title': 'Broken Street Light',
-      'description': 'Street light not working near park',
-      'location': {'lat': 27.7140, 'lng': 85.3200},
-      'status': 'deployed',
-      'timestamp': '5 hours ago',
-      'reporter': 'Jane Smith'
-    },
-    {
-      'id': 3,
-      'title': 'Garbage Accumulation',
-      'description': 'Waste not collected for 3 days',
-      'location': {'lat': 27.7190, 'lng': 85.3280},
-      'status': 'resolved',
-      'timestamp': '1 day ago',
-      'reporter': 'Mike Johnson'
-    },
-    {
-      'id': 4,
-      'title': 'Water Leakage',
-      'description': 'Water pipe leaking continuously',
-      'location': {'lat': 27.7160, 'lng': 85.3220},
-      'status': 'underprocessed',
-      'timestamp': '3 hours ago',
-      'reporter': 'Sarah Williams'
-    }
-  ];
+  List<Map<String, dynamic>> issues = [];
 
   @override
   void initState() {
@@ -80,13 +43,47 @@ class _MyWidgetState extends State<Myadministrator> {
     }
   }
 
-  void _updateIssueStatus(int id, String newStatus) {
-    setState(() {
-      int index = issues.indexWhere((issue) => issue['id'] == id);
-      if (index != -1) {
-        issues[index]['status'] = newStatus;
+  Future<void> _loadIssues() async {
+    try {
+      final fetchedIssues = await AuthService.fetchIssues();
+      setState(() {
+        issues = fetchedIssues;
+      });
+    } catch (e) {
+      print('Error loading issues: $e');
+      // Show error to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load issues')),
+        );
       }
-    });
+    }
+  }
+
+
+  Future<void> _updateIssueStatus(int id, String newStatus) async {
+    final success = await AuthService.updateIssueStatus(id, newStatus);
+    
+    if (success) {
+      setState(() {
+        int index = issues.indexWhere((issue) => issue['id'] == id);
+        if (index != -1) {
+          issues[index]['status'] = newStatus;
+        }
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Status updated successfully')),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update status')),
+        );
+      }
+    }
   }
 
   // --- UI Styling Helpers ---
