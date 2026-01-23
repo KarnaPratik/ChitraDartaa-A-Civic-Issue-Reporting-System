@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:chitradartaa/frontend/signup.dart';
-import 'package:chitradartaa/frontend/forgot_password.dart'; // Create this file for forgot password flow
 import 'package:chitradartaa/frontend/auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 
