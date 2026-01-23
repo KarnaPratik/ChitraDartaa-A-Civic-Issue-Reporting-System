@@ -77,6 +77,7 @@ class _MyCitizenState extends State<MyCitizen> {
     try {
       print("Starting auth check...");
       bool loggedIn = await AuthService.isLoggedIn();
+      bool admin_me = await AuthService.isAdmin();
       print("Auth check result: $loggedIn");
       
       if (!mounted) return;
@@ -85,10 +86,10 @@ class _MyCitizenState extends State<MyCitizen> {
         _isLoading = false;
       });
 
-      if (!loggedIn) {
+      if (!loggedIn || admin_me) {
         Future.delayed(Duration.zero, () {
           if (mounted) {
-            print("Navigating to login...");
+            print("Navigating to login... Please login again!");
             Navigator.pushReplacementNamed(context, '/login');
           }
         });
