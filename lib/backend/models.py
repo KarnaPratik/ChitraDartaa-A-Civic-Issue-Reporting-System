@@ -13,3 +13,4 @@ class IssueReport(db.Model):
     status =db.Column(db.String(20), default = "reported")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     filepath = db.Column(db.String(200), nullable = False)
+    label = db.Column(db.String(200), nullable = False)

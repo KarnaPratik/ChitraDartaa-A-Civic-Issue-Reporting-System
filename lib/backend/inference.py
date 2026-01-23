@@ -32,7 +32,7 @@ def infer_image():
 
 
         #  Run AI inference
-        segmented_img, confidence = run_inference(image)
+        segmented_img, confidence, label = run_inference(image)
         confidence=float(confidence)
         #  Convert segmented image → base64 (for DB + frontend)
         segmented_base64 = image_to_base64(segmented_img)
@@ -52,7 +52,8 @@ def infer_image():
             location=location,
             segmented_image=segmented_base64,
             confidence_score=confidence,
-            status="reported",
+            label = label,
+            # is_resolved=False,
             filepath = filepath,
             created_at=timestamp
         )
@@ -63,6 +64,7 @@ def infer_image():
         # Return JSON
         return jsonify({
             "message": "Inference successful",
+            "label": label,
             "segmented_image": segmented_base64,
             "confidence_score": confidence,
             "report_id": report.issue_id,

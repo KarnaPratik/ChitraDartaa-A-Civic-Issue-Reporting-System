@@ -77,5 +77,5 @@ def run_inference(image: Image.Image):
         
             
 
-    return image, combined_agreement
+    return image, combined_agreement, predicted_class
 
