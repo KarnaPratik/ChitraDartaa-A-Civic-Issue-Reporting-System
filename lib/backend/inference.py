@@ -6,6 +6,8 @@ from utils.model_runner import run_inference
 import os
 import time
 from auth import token_required
+from datetime import datetime
+from werkzeug.utils import secure_filename
 
 inference_bp = Blueprint("inference", __name__, url_prefix="/api/infer")
 
@@ -31,13 +33,16 @@ def infer_image():
 
         #  Run AI inference
         segmented_img, confidence = run_inference(image)
-
+        confidence=float(confidence)
         #  Convert segmented image → base64 (for DB + frontend)
         segmented_base64 = image_to_base64(segmented_img)
 
         # Save segmented image locally
-        timestamp = int(time.time())
-        filename = f"{username}_{timestamp}.png"
+        timestamp_int = int(time.time())
+        timestamp = datetime.fromtimestamp(timestamp_int)
+        timestamp_str = datetime.utcnow().strftime("%Y%m%d_%H%M%S")   # e.g. 20260123_183614
+        safe_username = secure_filename(str(username)) or "user" 
+        filename = f"{safe_username}_{timestamp_str}.png"
         filepath = os.path.join(UPLOAD_FOLDER, filename)
         segmented_img.save(filepath)
 
@@ -48,11 +53,13 @@ def infer_image():
             segmented_image=segmented_base64,
             confidence_score=confidence,
             is_resolved=False,
-            filepath = filepath
+            filepath = filepath,
+            created_at=timestamp
         )
+        print("report made")
         db.session.add(report)
         db.session.commit()
-
+        print("db added")
         # Return JSON
         return jsonify({
             "message": "Inference successful",
@@ -65,4 +72,7 @@ def infer_image():
     except KeyError as e:
         return jsonify({"error": f"Missing field {str(e)}"}), 400
     except Exception as e:
+        import traceback
+        traceback.print_exc()
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500
