@@ -35,6 +35,8 @@ dependencies:
     sdk: flutter
   http: ^1.2.0
   shared_preferences: ^2.2.2
+  flutter_map: ^8.2.0  # Check pub.dev for the latest version
+  latlong2: ^0.9.1     # Required for LatLng coordinates in flutter_map
  
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -90,7 +92,3 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
-
-  dependencies:
-    flutter_map: ^8.2.0  # Check pub.dev for the latest version
-    latlong2: ^0.9.1     # Required for LatLng coordinates in flutter_map
