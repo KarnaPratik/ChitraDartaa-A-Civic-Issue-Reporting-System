@@ -40,6 +40,7 @@ class _MyWidgetState extends State<Myadministrator> {
           _isLoading = false;
         });
       }
+      await _loadIssues();
     }
   }
 
