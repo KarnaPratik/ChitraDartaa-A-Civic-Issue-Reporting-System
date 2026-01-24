@@ -56,6 +56,9 @@ def predict_for_single_image(model, img_input):
     return probability
 
 def run_inference(image: Image.Image):
+    #default value is non issue otherwise the code just skips everything if confidence is less than 0.5
+    predicted_class = "NoIssue"
+
     # 1. Issue or non-issue logic
     conf1 = predict_for_single_image(model=issue_model1, img_input=image)
     conf2 = predict_for_single_image(model=issue_model2, img_input=image)

@@ -141,6 +141,9 @@ class _MyCitizenState extends State<MyCitizen> {
     }
   }
 
+  double? _latitude;
+  double? _longitude;
+
   Future<void> _determinePosition() async {
     try {
       LocationPermission permission = await Geolocator.checkPermission();
@@ -164,7 +167,9 @@ class _MyCitizenState extends State<MyCitizen> {
 
       if (mounted) {
         setState(() {
-          _currentAddress = "Lat: ${position.latitude.toStringAsFixed(3)}, Long: ${position.longitude.toStringAsFixed(3)}";
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+        _currentAddress = "Lat: ${position.latitude.toStringAsFixed(3)}, Long: ${position.longitude.toStringAsFixed(3)}";
         });
       }
     } catch (e) {

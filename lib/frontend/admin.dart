@@ -47,6 +47,15 @@
     Future<void> _loadIssues() async {
       try {
         final fetchedIssues = await AuthService.fetchIssues();
+        print("Fetched ${fetchedIssues.length} issues"); // Check if loaded
+
+       // DEBUG: To see data structure of the issue returned
+      if (fetchedIssues.isNotEmpty) {
+      print("First issue: ${fetchedIssues[0]}");
+      print("Location data: ${fetchedIssues[0]['location']}");
+      print("Lat type: ${fetchedIssues[0]['location']['lat'].runtimeType}");
+      }
+
         setState(() {
           issues = fetchedIssues;
         });
@@ -214,8 +223,14 @@
                                 ),
                                 MarkerLayer(
                                   markers: issues.map((issue) {
+                                    final location = issue['location'];
+
+                                    final double lat = location['lat'] is String ? double.parse(location['lat']) : (location['lat'] as num).toDouble();
+          
+                                  final double lng = location['lng'] is String ? double.parse(location['lng']) : (location['lng'] as num).toDouble();
+
                                     return Marker(
-                                      point: LatLng(issue['location']['lat'], issue['location']['lng']),
+                                      point: LatLng(lat,lng),
                                       width: 40,
                                       height: 40,
                                       child: Icon(

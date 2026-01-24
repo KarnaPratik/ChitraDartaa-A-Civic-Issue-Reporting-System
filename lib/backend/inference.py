@@ -24,8 +24,27 @@ def infer_image():
 
     try:
         username = data["username"] #try request.user.username once
-        location = data["location"]
+        location_data = data["location"]
         image_base64 = data["image"]
+
+        # Handle different possible location formats from frontend
+        if isinstance(location_data, dict):
+            # If it's already a dict, ensure it has lat/lng keys
+            if 'lat' in location_data and 'lng' in location_data:
+                location = {
+                    'lat': float(location_data['lat']),
+                    'lng': float(location_data['lng'])
+                }
+            elif 'latitude' in location_data and 'longitude' in location_data:
+                location = {
+                    'lat': float(location_data['latitude']),
+                    'lng': float(location_data['longitude'])
+                }
+            else:
+                return jsonify({"error": "Location must contain lat/lng or latitude/longitude"}), 400
+        else:
+            return jsonify({"error": "Location must be an object with lat and lng"}), 400
+
 
         #  Convert base64 → image
         image = base64_to_image(image_base64)

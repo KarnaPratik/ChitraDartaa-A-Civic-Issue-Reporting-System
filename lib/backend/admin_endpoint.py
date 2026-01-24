@@ -18,7 +18,7 @@ def get_reports():
     data = []
     for report in reports:
         data.append({
-            "id": report.id,
+            "id": report.issue_id,
             "title": f"Issue reported by {report.username}",
             "description": "AI detected issue", #could be better, nvm
             "reporter": report.username,
