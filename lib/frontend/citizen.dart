@@ -6,8 +6,8 @@ import 'dart:io';
 import 'package:chitradartaa/frontend/auth.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart'; // NEW: Added for username access
-
+import 'package:shared_preferences/shared_preferences.dart'; // Added for username access
+import 'package:flutter/foundation.dart' show kIsWeb; //for platform check
 
 class MyCitizen extends StatefulWidget {
   const MyCitizen({super.key});
@@ -19,7 +19,7 @@ class MyCitizen extends StatefulWidget {
 class _MyCitizenState extends State<MyCitizen> {
   // --- STATE VARIABLES ---
   int _selectedIndex = 0;
-  File? _selectedImage;
+  XFile? _selectedImage;
   final _descriptionController = TextEditingController();
   String _currentAddress = "Tap to pin location";
   bool _isAnalyzing = false;
@@ -95,7 +95,7 @@ class _MyCitizenState extends State<MyCitizen> {
         });
       }
     } catch (e) {
-      print("❌ Auth check error: $e");
+      print("Auth check error: $e");
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -127,7 +127,7 @@ class _MyCitizenState extends State<MyCitizen> {
 
       if (image != null) {
         setState(() {
-          _selectedImage = File(image.path);
+          _selectedImage = image; //for xfile
           _isAnalyzing = true;
         });
 
@@ -135,7 +135,7 @@ class _MyCitizenState extends State<MyCitizen> {
         await _sendForInference();
       }
     } catch (e) {
-      print("❌ Image picker error: $e");
+      print("Image picker error: $e");
       _showSnackBar("Error picking image: $e", Colors.red);
       setState(() => _isAnalyzing = false);
     }
@@ -173,13 +173,13 @@ class _MyCitizenState extends State<MyCitizen> {
         });
       }
     } catch (e) {
-      print("❌ Location error: $e");
+      print("Location error: $e");
       _showSnackBar("Could not fetch location: $e", Colors.orange);
     }
   }
 
-  Future<String> image_to_base64(File image) async {
-    final bytes = await image.readAsBytes();
+  Future<String> image_to_base64(XFile image) async {
+    final bytes = await image.readAsBytes(); //works for both web & mobile
     return base64Encode(bytes);
   }
 
@@ -243,13 +243,13 @@ class _MyCitizenState extends State<MyCitizen> {
       if (mounted) {
         setState(() {
           _isAnalyzing = false;
-          _prediction = data["prediction"] ?? "Issue Detected";
+          _prediction = data["label"] ?? "Issue Detected";
           _confidenceScore = (data["confidence_score"] ?? 0.0).toDouble();
         });
         _showSnackBar("Analysis complete!", Colors.green);
       }
     } catch (e) {
-      print("❌ Inference error: $e");
+      print("Inference error: $e");
       if (mounted) {
         setState(() => _isAnalyzing = false);
         
@@ -311,7 +311,7 @@ class _MyCitizenState extends State<MyCitizen> {
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         title: Text(
-          "CitizenConnect",
+          "ChitraDartaa",
           style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
@@ -383,7 +383,9 @@ class _MyCitizenState extends State<MyCitizen> {
                 border: Border.all(color: Colors.grey[200]!),
                 image: _selectedImage != null
                     ? DecorationImage(
-                        image: FileImage(_selectedImage!),
+                        image: kIsWeb
+                            ? NetworkImage(_selectedImage!.path) //web uses blob URLs
+                            : FileImage(File(_selectedImage!.path)) as ImageProvider, //mobile uses file paths
                         fit: BoxFit.cover,
                       )
                     : null,

@@ -16,7 +16,7 @@ path = os.path.dirname(os.path.realpath(__file__))
 filepath1 = os.path.join(path,"models",ISSUE_NON_ISSUE_PATH1)
 filepath2 = os.path.join(path,"models",ISSUE_NON_ISSUE_PATH2)
 filepath3 = os.path.join(path,"models",CLASS_MODEL_PATH)
-CLASSES_TO_USE = ['Garbage', 'Potholes', 'NoIssue']
+CLASSES_TO_USE = ['Garbage', 'NoIssue', 'Potholes']
 
 issue_model1 = tf.keras.models.load_model(filepath1)
 issue_model2 = tf.keras.models.load_model(filepath2)
@@ -49,8 +49,10 @@ def predict_for_single_image(model, img_input):
     else:
         img = img_input.resize((224, 224))#this is for when we send the image directly
     img_array=tf.keras.utils.img_to_array(img)
+    img_array = img_array / 255.0 #training ko bela 'rescale=1./255' use bhako xa
     img_array=np.expand_dims(img_array, axis=0)
     prediction=model.predict(img_array)
+    
     probability=prediction[0][0]
 
     return probability
@@ -64,7 +66,7 @@ def run_inference(image: Image.Image):
     conf2 = predict_for_single_image(model=issue_model2, img_input=image)
 
     combined_agreement = (2 * conf1 * conf2) / (conf1 + conf2) if (conf1 + conf2) > 0 else 0
-    
+    predicted_class = "No Issue";
     if combined_agreement>0.5:
 
 
@@ -74,6 +76,8 @@ def run_inference(image: Image.Image):
         
         # Please don't crash now
         class_pred = class_model.predict(img_array) 
+        print(f"DEBUG: Raw model output: {class_pred}") # test
+        print(f"DEBUG: Argmax index: {np.argmax(class_pred)}") #test
         global CLASSES_TO_USE
         combined_agreement = float(np.max(class_pred))
         predicted_class = CLASSES_TO_USE[int(np.argmax(class_pred))]
