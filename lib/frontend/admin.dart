@@ -49,22 +49,27 @@
         final fetchedIssues = await AuthService.fetchIssues();
         print("Fetched ${fetchedIssues.length} issues"); // Check if loaded
 
-       // DEBUG: To see data structure of the issue returned
-      if (fetchedIssues.isNotEmpty) {
-      print("First issue: ${fetchedIssues[0]}");
-      print("Location data: ${fetchedIssues[0]['location']}");
-      print("Lat type: ${fetchedIssues[0]['location']['lat'].runtimeType}");
-      }
+        final sanitizedIssues = fetchedIssues.map((issue) {
+      final location = issue['location'];
+      
+      // Force convert lat/lng to double regardless of original type
+      double lat = double.tryParse(location['lat'].toString()) ?? 0.0;
+      double lng = double.tryParse(location['lng'].toString()) ?? 0.0;
+
+      // Update the location map inside the issue
+      issue['location'] = {'lat': lat, 'lng': lng};
+      return issue;
+    }).toList();
 
         setState(() {
-          issues = fetchedIssues;
+          issues = sanitizedIssues;
         });
       } catch (e) {
         print('Error loading issues: $e');
         // Show error to user
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to load issues')),
+            SnackBar(content: Text('Failed to load issues: ${e.toString()} ')),
           );
         }
       }
@@ -74,6 +79,7 @@
     Future<void> _updateIssueStatus(int id, String newStatus) async {
       final success = await AuthService.updateIssueStatus(id, newStatus);
       
+      try{
       if (success) {
         setState(() {
           int index = issues.indexWhere((issue) => issue['id'] == id);
@@ -87,10 +93,12 @@
             const SnackBar(content: Text('Status updated successfully')),
           );
         }
-      } else {
+      }
+      } 
+      catch(e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to update status')),
+            SnackBar(content: Text('Failed to update status: ${e.toString()}')),
           );
         }
       }
@@ -173,12 +181,12 @@
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'CitizenConnect Admin',
+                        'ChitraDartaa Admin',
                         style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Community Issue Management',
+                        'Municipality Issue Management',
                         style: TextStyle(color: Colors.purple[100], fontSize: 14),
                       ),
                     ],
@@ -213,7 +221,7 @@
                             FlutterMap(
                               mapController: _mapController,
                               options: const MapOptions(
-                                initialCenter: LatLng(27.7172, 85.3240),
+                                initialCenter: LatLng(27.6194, 85.5388),
                                 initialZoom: 13,
                               ),
                               children: [
@@ -225,9 +233,17 @@
                                   markers: issues.map((issue) {
                                     final location = issue['location'];
 
-                                    final double lat = location['lat'] is String ? double.parse(location['lat']) : (location['lat'] as num).toDouble();
-          
-                                  final double lng = location['lng'] is String ? double.parse(location['lng']) : (location['lng'] as num).toDouble();
+    // Helper to safely parse coordinates from dynamic types
+    double parseCoordinate(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is num) return value.toDouble();
+      if (value is String) return double.tryParse(value) ?? 0.0;
+      return 0.0;
+    }
+
+    final double lat = parseCoordinate(location['lat']);
+    final double lng = parseCoordinate(location['lng']);
+                                    
 
                                     return Marker(
                                       point: LatLng(lat,lng),

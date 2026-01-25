@@ -23,7 +23,7 @@ def create_app():
     CORS(app,resources={r"/*": {"origins": "*"}}, 
      expose_headers=["Content-Type", "Authorization"],
      allow_headers=["Content-Type", "Authorization"],
-     methods=["GET", "POST", "OPTIONS"])
+     methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"])
 
 
 
