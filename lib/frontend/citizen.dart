@@ -128,11 +128,11 @@ class _MyCitizenState extends State<MyCitizen> {
       if (image != null) {
         setState(() {
           _selectedImage = image; //for xfile
-          _isAnalyzing = true;
+  
         });
 
         await _determinePosition();
-        await _sendForInference();
+    
       }
     } catch (e) {
       print("Image picker error: $e");
@@ -232,7 +232,7 @@ class _MyCitizenState extends State<MyCitizen> {
       print("Response status: ${response.statusCode}");
       print("Response body: ${response.body}");
 
-      if (response.statusCode == 401) {
+      if (response.statusCode == 402) {
         // Token expired or invalid
         throw Exception("Session expired. Please login again.");
       }
@@ -299,7 +299,7 @@ Future<void> _submitReport() async {
   try {
     // Show loading indicator
     setState(() {
-      _isLoading = true; // Add this bool to your state if you don't have it
+      _isAnalyzing  = true;
     });
 
     // Get user info
@@ -353,7 +353,7 @@ Future<void> _submitReport() async {
         _selectedImage = null;
         _descriptionController.clear();
         _selectedIndex = 1; // Navigate to reports tab
-        _isLoading = false;
+        _isAnalyzing  = false;
       });
     } else {
       final error = json.decode(response.body);
@@ -362,14 +362,14 @@ Future<void> _submitReport() async {
         Colors.red
       );
       setState(() {
-        _isLoading = false;
+        _isAnalyzing  = false;
       });
     }
   } catch (e) {
     print("Error submitting report: $e");
     _showSnackBar("Error: $e", Colors.red);
     setState(() {
-      _isLoading = false;
+      _isAnalyzing  = false;
     });
   }
 }
