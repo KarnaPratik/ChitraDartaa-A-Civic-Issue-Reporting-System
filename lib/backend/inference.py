@@ -10,9 +10,24 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 
 inference_bp = Blueprint("inference", __name__, url_prefix="/api/infer")
+citizen_report=Blueprint("citizen_report",__name__,url_prefix="/api/citizenreport")
 
 UPLOAD_FOLDER = "uploaded_images"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
+@citizen_report.route("",methods=["GET"])
+@token_required
+def citizenreport():
+    data=request.get_json()
+    if not data:
+        return jsonify({"error":"No json recieved!"});
+# username then we filter issues with users then return json with the report
+    username=data["username"];
+    reports=IssueReport.query.filter_by(username=username).all()
+    return jsonify([r.to_dict() for r in reports]),200
+    
+
 
 @inference_bp.route("", methods=["POST"])
 @token_required

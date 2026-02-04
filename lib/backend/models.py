@@ -14,3 +14,15 @@ class IssueReport(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     filepath = db.Column(db.String(200), nullable = False)
     label = db.Column(db.String(200), nullable = False)
+
+    def to_dict(self):
+        return {
+            "issue_id":self.issue_id,
+            "location":self.location,
+            "segmented_image":self.segmented_image,
+            "confidence_score":self.confidence_score,
+            "status":self.status,
+            "created_at":self.created_at,
+            "label":self.label,
+
+        }
