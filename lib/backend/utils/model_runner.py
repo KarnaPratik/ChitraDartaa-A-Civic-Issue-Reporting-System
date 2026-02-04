@@ -56,7 +56,7 @@ def predict_for_single_image(model, img_input):
     probability=prediction[0][0]
 
     return probability
-
+#this runs inferenec
 def run_inference(image: Image.Image):
     #default value is non issue otherwise the code just skips everything if confidence is less than 0.5
     predicted_class = "NoIssue"
