@@ -24,7 +24,6 @@ def citizenreport():
     print(f"DEBUG: Fetching reports for user: {username}")
 
     if not username:
-        # If we got a token but no username in body, try to use the token's identity
         username = getattr(request, 'user', None)
         print(f"DEBUG: Falling back to Token user: {username}")
 

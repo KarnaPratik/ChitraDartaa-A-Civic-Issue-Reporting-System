@@ -53,6 +53,33 @@ void _refreshData() {
     print("Refreshing user reports... Sequence: $_refreshCounter" );
   });
 }
+void _showFullImage(String base64String) {
+  showDialog(
+    context: context,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(10),
+      child: Stack(
+        alignment: Alignment.topRight,
+        children: [
+          // The actual image
+          ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            child: Image.memory(
+              base64Decode(base64String),
+              fit: BoxFit.contain,
+            ),
+          ),
+          // Close button
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white, size: 30),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    ),
+  );
+}
   // NEW: Test backend connectivity
   Future<void> _testBackendConnection() async {
     try {
@@ -699,7 +726,8 @@ Widget _buildContributionsTab() {
           final report = reports[index];
           return _buildTimelineCard(
             report['label'] ?? "Issue", 
-            report['status'] ?? "Pending"
+            report['status'] ?? "Pending",
+            report['segmented_image'],
           );
         },
       );
@@ -707,9 +735,7 @@ Widget _buildContributionsTab() {
   ),
   );
 }
-
-  Widget _buildTimelineCard(String title, String status) {
-
+Widget _buildTimelineCard(String title, String status, String? base64Image) {
   final statusConfig = {
     'solved': {'color': Colors.green, 'icon': Icons.check_circle_outline},
     'team dispatched': {'color': Colors.blue, 'icon': Icons.local_shipping_outlined},
@@ -722,7 +748,6 @@ Widget _buildContributionsTab() {
   final Color themeColor = config['color'] as Color;
   final IconData themeIcon = config['icon'] as IconData;
 
-
   bool isAtLeastViewed = ['official viewed', 'team dispatched', 'solved'].contains(status.toLowerCase());
   bool isAtLeastDispatched = ['team dispatched', 'solved'].contains(status.toLowerCase());
   bool isSolved = status.toLowerCase() == 'solved';
@@ -732,10 +757,53 @@ Widget _buildContributionsTab() {
     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
     child: ExpansionTile(
-      // Clean leading icon using the dynamic theme
-      leading: CircleAvatar(
-        backgroundColor: themeColor.withOpacity(0.1),
-        child: Icon(themeIcon, color: themeColor, size: 20),
+      leading: GestureDetector(
+        onTap: () {
+          if (base64Image != null && base64Image.isNotEmpty) {
+            _showFullImage(base64Image); 
+          }
+        },
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: Stack(
+            children: [
+              // 1. The Image (Replaces the question mark)
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: base64Image != null && base64Image.isNotEmpty
+                      ? Image.memory(
+                          base64Decode(base64Image),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => 
+                              const Icon(Icons.broken_image, size: 20),
+                        )
+                      : const Icon(Icons.image, size: 20, color: Colors.grey),
+                ),
+              ),
+              // 2. The Status Icon (Positioned at bottom right of image)
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle, // FIXED: Corrected from BoxCircle
+                  ),
+                  child: Icon(themeIcon, color: themeColor, size: 14),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
       title: Text(
         title, 
@@ -753,7 +821,6 @@ Widget _buildContributionsTab() {
           style: TextStyle(color: themeColor, fontSize: 10, fontWeight: FontWeight.bold),
         ),
       ),
-
       children: [
         Container(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -772,7 +839,7 @@ Widget _buildContributionsTab() {
     ),
   );
 }
-
+  
   Widget _buildStatusStep(String label, bool done) {
     return Row(
       children: [
