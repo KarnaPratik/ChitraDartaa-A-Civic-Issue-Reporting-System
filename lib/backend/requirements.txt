@@ -5,3 +5,5 @@ flask-sqlalchemy
 python-dotenv
 pyjwt
 werkzeug
+ultralytics
+cv2-python
