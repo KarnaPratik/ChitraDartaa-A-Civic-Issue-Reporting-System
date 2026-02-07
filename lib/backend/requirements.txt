@@ -6,4 +6,4 @@ python-dotenv
 pyjwt
 werkzeug
 ultralytics
-cv2-python
+opencv-python

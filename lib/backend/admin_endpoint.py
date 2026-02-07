@@ -49,7 +49,8 @@ def get_reports():
             "status": report.status, 
             "confidence_score": report.confidence_score,
             "segmented_image": report.segmented_image,
-            "timestamp": report.created_at.isoformat()
+            "timestamp": report.created_at.isoformat(),
+            "label": report.label,
         })
 
     return jsonify({

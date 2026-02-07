@@ -12,8 +12,8 @@ import cv2
 #CLASS_MODEL_PATH = "gar_pot_model.keras"
 
 ISSUE_NON_ISSUE_PATH1= "3rdmodelwithbetternoissueaccuracy.keras"
-ISSUE_NON_ISSUE_PATH2= "issue_nonissue_detector_tl.keras"
-CLASS_MODEL_PATH= "garbage_pothole_detector_tl.keras"
+ISSUE_NON_ISSUE_PATH2= "issue_detector_model.keras"
+CLASS_MODEL_PATH= "gar_pot1_model.keras"
 SEG_MODEL_PATH_POTHOLES = "best_for_potholes.pt"
 SEG_MODEL_PATH_GARBAGE = "best_for_garbage.pt"
 
