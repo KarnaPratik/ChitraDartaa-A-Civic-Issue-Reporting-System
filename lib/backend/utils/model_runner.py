@@ -1,17 +1,22 @@
-
 import tensorflow as tf
 import numpy as np
 from PIL import Image
 import os
+from ultralytics import YOLO
+import cv2
 
 
 
 # Load your models once
+#ISSUE_NON_ISSUE_PATH1 = "issue_detector_model.keras"
+#CLASS_MODEL_PATH = "gar_pot_model.keras"
 
-ISSUE_NON_ISSUE_PATH1 = "issue_non_issue_model1_20split_96.07accuracy.keras"
-ISSUE_NON_ISSUE_PATH2 = "issue_non_issue_model2_40split_96.76accuracy.keras"
-CLASS_MODEL_PATH = "pothole_garbage_classifier.h5"
-# SEG_MODEL_PATH = "segmentation_model.h5"
+ISSUE_NON_ISSUE_PATH1= "3rdmodelwithbetternoissueaccuracy.keras"
+ISSUE_NON_ISSUE_PATH2= "issue_nonissue_detector_tl.keras"
+CLASS_MODEL_PATH= "garbage_pothole_detector_tl.keras"
+SEG_MODEL_PATH_POTHOLES = "best_for_potholes.pt"
+SEG_MODEL_PATH_GARBAGE = "best_for_garbage.pt"
+
 
 path = os.path.dirname(os.path.realpath(__file__))
 filepath1 = os.path.join(path,"models",ISSUE_NON_ISSUE_PATH1)
@@ -19,10 +24,12 @@ filepath2 = os.path.join(path,"models",ISSUE_NON_ISSUE_PATH2)
 filepath3 = os.path.join(path,"models",CLASS_MODEL_PATH)
 CLASSES_TO_USE = ['Garbage', 'NoIssue', 'Potholes']
 
-issue_model1 = tf.keras.models.load_model(filepath1)
-issue_model2 = tf.keras.models.load_model(filepath2)
-class_model = tf.keras.models.load_model(filepath3)
-# seg_model = tf.keras.models.load_model(SEG_MODEL_PATH)
+issue_model1 = tf.keras.models.load_model(filepath1,compile=False, safe_mode=False)
+issue_model2 = tf.keras.models.load_model(filepath2,compile=False, safe_mode=False) #bypass the need for the original optimizer config
+class_model = tf.keras.models.load_model(filepath3,compile=False, safe_mode=False)
+
+seg_model_potholes = YOLO(os.path.join(path,"models",SEG_MODEL_PATH_POTHOLES))
+seg_model_garbage = YOLO(os.path.join(path,"models",SEG_MODEL_PATH_GARBAGE))
 
 
 
@@ -86,3 +93,4 @@ def run_inference(image: Image.Image):
             
 
     return image, combined_agreement, predicted_class
+
