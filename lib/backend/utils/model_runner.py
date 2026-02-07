@@ -24,12 +24,12 @@ filepath2 = os.path.join(path,"models",ISSUE_NON_ISSUE_PATH2)
 filepath3 = os.path.join(path,"models",CLASS_MODEL_PATH)
 CLASSES_TO_USE = ['Garbage', 'NoIssue', 'Potholes']
 
-issue_model1 = tf.keras.models.load_model(filepath1,compile=False, safe_mode=False)
-issue_model2 = tf.keras.models.load_model(filepath2,compile=False, safe_mode=False) #bypass the need for the original optimizer config
-class_model = tf.keras.models.load_model(filepath3,compile=False, safe_mode=False)
+#issue_model1 = tf.keras.models.load_model(filepath1,compile=False, safe_mode=False)
+#issue_model2 = tf.keras.models.load_model(filepath2,compile=False, safe_mode=False) #bypass the need for the original optimizer config
+#class_model = tf.keras.models.load_model(filepath3,compile=False, safe_mode=False)
 
-seg_model_potholes = YOLO(os.path.join(path,"models",SEG_MODEL_PATH_POTHOLES))
-seg_model_garbage = YOLO(os.path.join(path,"models",SEG_MODEL_PATH_GARBAGE))
+#seg_model_potholes = YOLO(os.path.join(path,"models",SEG_MODEL_PATH_POTHOLES))
+#seg_model_garbage = YOLO(os.path.join(path,"models",SEG_MODEL_PATH_GARBAGE))
 
 
 
@@ -70,27 +70,27 @@ def run_inference(image: Image.Image):
     predicted_class = "NoIssue"
 
     # 1. Issue or non-issue logic
-    conf1 = predict_for_single_image(model=issue_model1, img_input=image)
-    conf2 = predict_for_single_image(model=issue_model2, img_input=image)
+    #conf1 = predict_for_single_image(model=issue_model1, img_input=image)
+    #conf2 = predict_for_single_image(model=issue_model2, img_input=image)
 
-    combined_agreement = (2 * conf1 * conf2) / (conf1 + conf2) if (conf1 + conf2) > 0 else 0
-    predicted_class = "No Issue";
-    if combined_agreement>0.5:
+    #combined_agreement = (2 * conf1 * conf2) / (conf1 + conf2) if (conf1 + conf2) > 0 else 0
+    #predicted_class = "No Issue";
+    # if combined_agreement>0.5:
 
 
-        img_resized = image.resize((224, 224))
-        img_array = tf.keras.utils.img_to_array(img_resized)
-        img_array = np.expand_dims(img_array, axis=0)
+    #     img_resized = image.resize((224, 224))
+    #     img_array = tf.keras.utils.img_to_array(img_resized)
+    #     img_array = np.expand_dims(img_array, axis=0)
         
-        # Please don't crash now
-        class_pred = class_model.predict(img_array) 
-        print(f"DEBUG: Raw model output: {class_pred}") # test
-        print(f"DEBUG: Argmax index: {np.argmax(class_pred)}") #test
-        global CLASSES_TO_USE
-        combined_agreement = float(np.max(class_pred))
-        predicted_class = CLASSES_TO_USE[int(np.argmax(class_pred))]
+    #     # Please don't crash now
+    #     class_pred = class_model.predict(img_array) 
+    #     print(f"DEBUG: Raw model output: {class_pred}") # test
+    #     print(f"DEBUG: Argmax index: {np.argmax(class_pred)}") #test
+    #     global CLASSES_TO_USE
+    #     combined_agreement = float(np.max(class_pred))
+    #     predicted_class = CLASSES_TO_USE[int(np.argmax(class_pred))]
         
             
 
-    return image, combined_agreement, predicted_class
+    return image, 1,"Potholes"
 
