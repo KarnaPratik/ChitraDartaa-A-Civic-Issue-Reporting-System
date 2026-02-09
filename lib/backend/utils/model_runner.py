@@ -2,95 +2,83 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 import os
-from ultralytics import YOLO
-import cv2
+from tensorflow.keras import layers, models
 
-
-
-# Load your models once
-#ISSUE_NON_ISSUE_PATH1 = "issue_detector_model.keras"
-#CLASS_MODEL_PATH = "gar_pot_model.keras"
-
-ISSUE_NON_ISSUE_PATH1= "3rdmodelwithbetternoissueaccuracy.keras"
-ISSUE_NON_ISSUE_PATH2= "issue_detector_model.keras"
-CLASS_MODEL_PATH= "gar_pot1_model.keras"
-SEG_MODEL_PATH_POTHOLES = "best_for_potholes.pt"
-SEG_MODEL_PATH_GARBAGE = "best_for_garbage.pt"
-
-
+# Define paths
 path = os.path.dirname(os.path.realpath(__file__))
-filepath1 = os.path.join(path,"models",ISSUE_NON_ISSUE_PATH1)
-filepath2 = os.path.join(path,"models",ISSUE_NON_ISSUE_PATH2)
-filepath3 = os.path.join(path,"models",CLASS_MODEL_PATH)
-CLASSES_TO_USE = ['Garbage', 'NoIssue', 'Potholes']
+ISSUE_NON_ISSUE_PATH2 = "issue_detector1_finetuned.keras"
+CLASS_MODEL_PATH = "gar_pot1_finetuned.keras"
 
-#issue_model1 = tf.keras.models.load_model(filepath1,compile=False, safe_mode=False)
-#issue_model2 = tf.keras.models.load_model(filepath2,compile=False, safe_mode=False) #bypass the need for the original optimizer config
-#class_model = tf.keras.models.load_model(filepath3,compile=False, safe_mode=False)
+filepath_issue = os.path.join(path, "models", ISSUE_NON_ISSUE_PATH2)
+filepath_class = os.path.join(path, "models", CLASS_MODEL_PATH)
 
-#seg_model_potholes = YOLO(os.path.join(path,"models",SEG_MODEL_PATH_POTHOLES))
-#seg_model_garbage = YOLO(os.path.join(path,"models",SEG_MODEL_PATH_GARBAGE))
-
-
-
-# # Preprocessing functions
-# def preprocess_class(image: Image.Image):
-#     # Resize and normalize as your model expects
-#     img = image.resize((224, 224))
-#     arr = np.array(img) / 255.0
-#     if arr.ndim == 2:  # grayscale → RGB
-#         arr = np.stack([arr]*3, axis=-1)
-#     arr = np.expand_dims(arr, 0)  # batch dimension
-#     return arr
-
-# def preprocess_seg(image: Image.Image):
-#     img = image.resize((256, 256)) 
-#     arr = np.array(img) / 255.0
-#     if arr.ndim == 2:  # grayscale → RGB
-#         arr = np.stack([arr]*3, axis=-1)
-#     arr = np.expand_dims(arr, 0)  # batch dimension
-#     return arr
-
-def predict_for_single_image(model, img_input):
-    if isinstance(img_input, str):#this is for when we send image from dir
-        img = tf.keras.utils.load_img(img_input, target_size=(224, 224))
-    else:
-        img = img_input.resize((224, 224))#this is for when we send the image directly
-    img_array=tf.keras.utils.img_to_array(img)
-    img_array = img_array / 255.0 #training ko bela 'rescale=1./255' use bhako xa
-    img_array=np.expand_dims(img_array, axis=0)
-    prediction=model.predict(img_array)
+def build_model_for_loading(num_classes):
+    """
+    Reconstructs the EXACT architecture used in training to 
+    bypass Sequential loading bugs.
+    """
+    base_model = tf.keras.applications.EfficientNetV2B0(
+        input_shape=(224, 224, 3),
+        include_top=False,
+        weights=None # We will load your custom weights
+    )
     
-    probability=prediction[0][0]
+    # We use the Functional API here as it's more stable for loading
+    inputs = layers.Input(shape=(224, 224, 3))
+    x = base_model(inputs, training=False)
+    x = layers.GlobalAveragePooling2D()(x)
+    x = layers.Dropout(0.3)(x)
+    
+    activation = 'sigmoid' if num_classes == 1 else 'softmax'
+    outputs = layers.Dense(num_classes, activation=activation)(x)
+    
+    return models.Model(inputs, outputs)
 
-    return probability
-#this runs inferenec
+# --- LOAD MODELS MANUALLY ---
+print("Loading Issue Model...")
+issue_model = build_model_for_loading(num_classes=1)
+issue_model.load_weights(filepath_issue)
+
+print("Loading Classification Model...")
+class_model = build_model_for_loading(num_classes=2)
+class_model.load_weights(filepath_class)
+
+# This must match your training class_names=['Garbage', 'Potholes']
+CLASSES_TO_USE = ['Garbage', 'Potholes']
+
+def preprocess_image(image: Image.Image):
+    """Matches the preprocessing used in training: 224x224 and 1/255 scaling."""
+    img = image.resize((224, 224))
+    img_array = tf.keras.utils.img_to_array(img)
+    img_array = img_array / 255.0  # Training used 1./255 scaling
+    img_array = np.expand_dims(img_array, axis=0)
+    return img_array
+
 def run_inference(image: Image.Image):
-    #default value is non issue otherwise the code just skips everything if confidence is less than 0.5
-    predicted_class = "NoIssue"
+    # 1. Preprocess
+    processed_img = preprocess_image(image)
 
-    # 1. Issue or non-issue logic
-    #conf1 = predict_for_single_image(model=issue_model1, img_input=image)
-    #conf2 = predict_for_single_image(model=issue_model2, img_input=image)
+    # 2. Model 1: Issue vs NoIssue
+    # Training labels: ['Issues', 'NoIssue'] -> Issues=0, NoIssue=1
+    issue_pred = issue_model.predict(processed_img)[0][0]
+    print(f"DEBUG: Isuue Prediction: {issue_pred}")
+    
+    # If the probability is closer to 0, it's an "Issue"
+    if issue_pred < 0.5:
+        # 3. Model 2: Garbage vs Potholes
+        # Training labels: ['Garbage', 'Potholes'] -> Garbage=0, Potholes=1
+        type_preds = class_model.predict(processed_img)[0]
+        print(f"DEBUG: Raw model output: {type_preds}") 
+        print(f"DEBUG: Argmax index: {np.argmax(type_preds)}")
+        class_idx = np.argmax(type_preds)
+        # DEBUG PRINTS - Keep these until you are sure of the order
+        print(f"--- INFERENCE DEBUG ---")
+        print(f"Issue Confidence (0=Issue, 1=No): {issue_pred:.4f}")
+        print(f"Class Probabilities: Garbage: {type_preds[0]:.4f}, Potholes: {type_preds[1]:.4f}")
+        predicted_class = CLASSES_TO_USE[class_idx]
+        confidence = float(np.max(type_preds))
+    else:
+        predicted_class = "No Issue"
+        confidence = float(issue_pred)
 
-    #combined_agreement = (2 * conf1 * conf2) / (conf1 + conf2) if (conf1 + conf2) > 0 else 0
-    #predicted_class = "No Issue";
-    # if combined_agreement>0.5:
-
-
-    #     img_resized = image.resize((224, 224))
-    #     img_array = tf.keras.utils.img_to_array(img_resized)
-    #     img_array = np.expand_dims(img_array, axis=0)
-        
-    #     # Please don't crash now
-    #     class_pred = class_model.predict(img_array) 
-    #     print(f"DEBUG: Raw model output: {class_pred}") # test
-    #     print(f"DEBUG: Argmax index: {np.argmax(class_pred)}") #test
-    #     global CLASSES_TO_USE
-    #     combined_agreement = float(np.max(class_pred))
-    #     predicted_class = CLASSES_TO_USE[int(np.argmax(class_pred))]
-        
-            
-
-    return image, 1,"Potholes"
-
+    return image, confidence, predicted_class
